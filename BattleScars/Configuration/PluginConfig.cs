@@ -11,29 +11,37 @@ namespace BattleScars.Configuration
 
     internal static class PluginConfig
     {
-        // Tier policy. The cosmetic pool flips at each HP threshold and one more
-        // scar is added per CosmeticStepHP below the rusty cutoff. Tweak by
-        // recompiling; not config because most players never touch these.
-        public const int RustyAtOrBelowHP = 75;
-        public const int BandagesAtOrBelowHP = 60;
-        public const int DamagedAtOrBelowHP = 50;
-        public const int WreckedFaceAtOrBelowHP = 25;
-        public const int CosmeticStepHP = 8;
+        // Scar policy. The first scar shows at FirstScarHP and another body slot
+        // joins it every SlotStepHP below that. Each slot worsens one stage
+        // (bandages -> cracks -> damaged -> broken) every SeverityStepHP, and
+        // SlotStaggerHP delays each later slot's worsening so the bot wears a
+        // mix of stages at once instead of flipping wholesale. The broken-mesh
+        // head is held back until BrokenHeadHP. Tweak by recompiling; not config
+        // because most players never touch these.
+        public const int FirstScarHP = 75;
+        public const int SlotStepHP = 8;
+        public const int SeverityStepHP = 15;
+        public const int SlotStaggerHP = 7;
+        public const int BrokenHeadHP = 9;
 
         // Multiplier hit at the Wrecked tier (1 HP). Lighter tiers interpolate
         // from 1.0 toward these in equal steps.
         public const float SpeedNerfMax = 0.70f;
         public const float StaminaNerfMax = 0.45f;
 
-        public const float ScreenOverlayMaxAlpha = 0.20f;
+        // Peak alpha of the screen-edge vignette, hit at the corners on the
+        // Wrecked tier. The middle of the screen stays clear.
+        public const float ScreenOverlayMaxAlpha = 0.50f;
 
         // Substring tokens matched against asset.name and assetName,
-        // case-insensitive. One token like "Rusty" picks up the whole set since
-        // every member shares an assetName.
-        public const string RustyAllowList = "Rusty";
+        // case-insensitive. One token like "Bandages" picks up the whole set
+        // since every member shares an assetName. The broken set is split into
+        // head and body by CosmeticType after discovery, so it needs no
+        // separate token.
         public const string BandagesAllowList = "Bandages";
-        public const string DamagedAllowList = "Damaged,Cracks";
-        public const string WreckedFaceCosmetic = "Broken";
+        public const string CracksAllowList = "Cracks";
+        public const string DamagedAllowList = "Damaged";
+        public const string BrokenAllowList = "Broken";
 
         public static ConfigEntry<RunMode> Mode = null!;
         public static ConfigEntry<bool> EnableCosmetics = null!;

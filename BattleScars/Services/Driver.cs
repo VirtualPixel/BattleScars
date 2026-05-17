@@ -18,14 +18,11 @@ namespace BattleScars.Services
 
         private float _slowTickTimer;
         private float _voiceTickTimer;
-        private readonly Dictionary<string, AppliedCosmeticState> _applied = new();
+        private bool _wasActive;
 
-        private struct AppliedCosmeticState
-        {
-            public int Count;
-            public CosmeticPool Pool;
-            public bool Face;
-        }
+        // Last scar set forced onto each player, keyed by steamID. The slow tick
+        // only re-applies when the set actually changes.
+        private readonly Dictionary<string, List<int>> _applied = new();
 
         private void Awake()
         {
@@ -37,7 +34,18 @@ namespace BattleScars.Services
         {
             HandleDevHotkeys();
 
-            if (StatsManager.instance == null) return;
+            // DontDestroyOnLoad keeps this ticking through the menus. Outside an
+            // active level/shop, strip the local bot back to clean and stop.
+            if (StatsManager.instance == null || !ConfigService.InActiveScene())
+            {
+                if (_wasActive)
+                {
+                    TeardownLocal();
+                    _wasActive = false;
+                }
+                return;
+            }
+            _wasActive = true;
 
             var local = PlayerLookup.LocalAvatar();
             bool enabled = ConfigService.IsEnabled();
@@ -99,23 +107,33 @@ namespace BattleScars.Services
         {
             SaveBackup.TryBackupOnce(local);
             if (local == null || string.IsNullOrEmpty(local.steamID)) return;
-
-            int hp = EffectiveHealthFor(local);
-            bool effectsOn = enabled && !deadOrDisabled;
-            int count = effectsOn ? ConfigService.CosmeticCountForHealth(hp) : 0;
-            CosmeticPool pool = effectsOn ? ConfigService.PoolForHealth(hp) : CosmeticPool.Rusty;
-            bool face = effectsOn && ConfigService.WreckedFaceActive(hp);
-
-            _applied.TryGetValue(local.steamID, out var was);
-            if (was.Count == count && was.Pool == pool && was.Face == face) return;
-            _applied[local.steamID] = new AppliedCosmeticState { Count = count, Pool = pool, Face = face };
-
             if (!ConfigService.CosmeticsEnabled()) return;
-            if (count <= 0) Cosmetics.RestoreToLocal(local);
-            else Cosmetics.ApplyForState(local, count, pool, face);
+
+            var forced = enabled && !deadOrDisabled
+                ? Cosmetics.ForcedSetForHealth(local.steamID, EffectiveHealthFor(local))
+                : new List<int>();
+
+            if (_applied.TryGetValue(local.steamID, out var was) && SameSet(was, forced)) return;
+            _applied[local.steamID] = forced;
+
+            if (forced.Count == 0) Cosmetics.RestoreToLocal(local);
+            else Cosmetics.Apply(local, forced);
         }
 
         public void InvalidateAppliedCosmetics() => _applied.Clear();
+
+        // Leaving an active scene: pull scars and the voice override off the
+        // local bot so it returns to the lobby looking like itself.
+        private void TeardownLocal()
+        {
+            var local = PlayerLookup.LocalAvatar();
+            if (local != null)
+            {
+                Cosmetics.RestoreToLocal(local);
+                Effects.CancelVoice(local);
+            }
+            _applied.Clear();
+        }
 
         // Called by SetupCosmeticsReassertPatch when a vanilla cosmetic refresh
         // (preset switch, lobby init, late MetaManager save load) has already
@@ -126,15 +144,21 @@ namespace BattleScars.Services
             var local = PlayerLookup.LocalAvatar();
             if (local == null || string.IsNullOrEmpty(local.steamID)) return;
             if (!ConfigService.IsEnabled() || !ConfigService.CosmeticsEnabled()) return;
+            if (!ConfigService.InActiveScene()) return;
             if (local.deadSet || local.isDisabled) return;
 
-            int hp = EffectiveHealthFor(local);
-            int count = ConfigService.CosmeticCountForHealth(hp);
-            if (count <= 0) return;
-            CosmeticPool pool = ConfigService.PoolForHealth(hp);
-            bool face = ConfigService.WreckedFaceActive(hp);
-            _applied[local.steamID] = new AppliedCosmeticState { Count = count, Pool = pool, Face = face };
-            Cosmetics.ApplyForState(local, count, pool, face);
+            var forced = Cosmetics.ForcedSetForHealth(local.steamID, EffectiveHealthFor(local));
+            if (forced.Count == 0) return;
+            _applied[local.steamID] = forced;
+            Cosmetics.Apply(local, forced);
+        }
+
+        private static bool SameSet(List<int> a, List<int> b)
+        {
+            if (a.Count != b.Count) return false;
+            for (int i = 0; i < a.Count; i++)
+                if (a[i] != b[i]) return false;
+            return true;
         }
     }
 }

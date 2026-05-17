@@ -1,18 +1,34 @@
+using BattleScars.Configuration;
 using UnityEngine;
 
 namespace BattleScars.Services
 {
-    // Local-only red vignette + CameraGlitch pulses. Alpha scales with tier.
-    // Cadence comes from a continuous HP curve so the screen feels increasingly
-    // broken on the way to 1 HP instead of stepping in tier jumps. Not
-    // broadcast, peers don't see your screen.
+    // Local-only damage feedback: a red vignette hugging the screen edges plus
+    // CameraGlitch pulses. The vignette stays out of the middle of the screen so
+    // it reads as "you're hurt" without smothering what you're looking at, the
+    // way the low-health indicator does in Call of Duty. Cadence comes off a
+    // continuous HP curve so it ramps smoothly toward 1 HP. Not broadcast, peers
+    // don't see your screen.
     public class ScreenOverlay : MonoBehaviour
     {
+        // Vignette gradient in normalized radius: clear inside Inner, ramping to
+        // full at Outer. A mid-edge sits at radius 1.0, the corners past it.
+        private const float VignetteInner = 0.42f;
+        private const float VignetteOuter = 1.05f;
+
         private float _glitchTimer;
+        private Texture2D? _vignette;
+
+        private void Awake() => _vignette = BuildVignette();
+
+        private void OnDestroy()
+        {
+            if (_vignette != null) Destroy(_vignette);
+        }
 
         private void Update()
         {
-            if (!ConfigService.ScreenOverlayEnabled()) return;
+            if (!ConfigService.ScreenOverlayEnabled() || !ConfigService.InActiveScene()) return;
             var avatar = PlayerLookup.LocalAvatar();
             if (avatar == null) return;
             if (avatar.deadSet || avatar.isDisabled) return;
@@ -67,7 +83,8 @@ namespace BattleScars.Services
 
         private void OnGUI()
         {
-            if (!ConfigService.ScreenOverlayEnabled()) return;
+            if (!ConfigService.ScreenOverlayEnabled() || _vignette == null) return;
+            if (!ConfigService.InActiveScene()) return;
             var avatar = PlayerLookup.LocalAvatar();
             if (avatar == null) return;
             var tier = ConfigService.TierForHealth(Driver.EffectiveHealthFor(avatar));
@@ -81,13 +98,43 @@ namespace BattleScars.Services
                 Tier.Wrecked => 1.00f,
                 _ => 0f,
             };
-            float pulse = 0.85f + 0.15f * Mathf.Sin(Time.time * (2f + t * 3f));
-            float alpha = Mathf.Lerp(0f, Configuration.PluginConfig.ScreenOverlayMaxAlpha, t) * pulse;
+            // Slow heartbeat that quickens as the tiers climb.
+            float pulse = 0.82f + 0.18f * Mathf.Sin(Time.time * (2f + t * 3f));
+            float alpha = PluginConfig.ScreenOverlayMaxAlpha * t * pulse;
 
             var prev = GUI.color;
-            GUI.color = new Color(0.6f, 0f, 0f, alpha);
-            GUI.DrawTexture(new Rect(0, 0, Screen.width, Screen.height), Texture2D.whiteTexture, ScaleMode.StretchToFill);
+            GUI.color = new Color(0.7f, 0.04f, 0.04f, alpha);
+            GUI.DrawTexture(new Rect(0, 0, Screen.width, Screen.height), _vignette, ScaleMode.StretchToFill);
             GUI.color = prev;
+        }
+
+        // White texture carrying only the vignette's alpha falloff. OnGUI tints
+        // it red and scales the alpha, so the gradient lives here and the
+        // intensity lives there.
+        private static Texture2D BuildVignette()
+        {
+            const int size = 128;
+            var tex = new Texture2D(size, size, TextureFormat.RGBA32, false)
+            {
+                filterMode = FilterMode.Bilinear,
+                wrapMode = TextureWrapMode.Clamp,
+            };
+            var pixels = new Color[size * size];
+            float center = (size - 1) * 0.5f;
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float dx = (x - center) / center;
+                    float dy = (y - center) / center;
+                    float d = Mathf.Sqrt(dx * dx + dy * dy);
+                    float edge = Mathf.InverseLerp(VignetteInner, VignetteOuter, d);
+                    pixels[y * size + x] = new Color(1f, 1f, 1f, edge * edge);
+                }
+            }
+            tex.SetPixels(pixels);
+            tex.Apply();
+            return tex;
         }
     }
 }

@@ -1,7 +1,7 @@
 {
   "name": "BattleScars",
-  "version_number": "1.0.0",
+  "version_number": "1.1.0",
   "website_url": "https://github.com/VirtualPixel/BattleScars",
-  "description": "Your bot looks more wrecked the closer to dying you are. Rust, bandages, cracks, broken-mesh limbs at 1 HP. Visuals-only by default; flip one setting to add movement and stamina nerfs. Client-side, scars broadcast to unmodded peers.",
+  "description": "Your bot looks more wrecked the closer to dying you are. Bandages, cracks, dents, broken-mesh limbs pile on as your HP drops. Visuals-only by default; flip one setting for movement and stamina nerfs. Client-side, scars broadcast to unmodded peers.",
   "dependencies": ["BepInEx-BepInExPack-5.4.2305"]
 }

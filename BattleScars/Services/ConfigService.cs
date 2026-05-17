@@ -18,26 +18,45 @@ namespace BattleScars.Services
 
         public static int TestHealthOverride() => PluginConfig.TestHealth.Value;
 
-        public static int CosmeticCountForHealth(int currentHP)
+        // The mod only runs during active gameplay: levels and the shop. The
+        // lobby, menus, splash, tutorial and arena get nothing, which is what
+        // keeps scars and the screen overlay from leaking into the main menu
+        // after a death.
+        public static bool InActiveScene()
         {
-            if (currentHP > PluginConfig.RustyAtOrBelowHP) return 0;
-            return ((PluginConfig.RustyAtOrBelowHP - currentHP) / PluginConfig.CosmeticStepHP) + 1;
+            var run = RunManager.instance;
+            if (run == null || run.levelCurrent == null) return false;
+            return SemiFunc.RunIsLevel() || SemiFunc.RunIsShop();
         }
 
-        public static CosmeticPool PoolForHealth(int currentHP)
+        // Damage taken below the first-scar threshold, floored at zero.
+        public static int DamageDepth(int currentHP) =>
+            Mathf.Max(0, PluginConfig.FirstScarHP - currentHP);
+
+        // How many body slots carry a scar at this HP. One at the threshold,
+        // one more for every SlotStepHP lost after.
+        public static int ScarSlotCount(int currentHP)
         {
-            if (currentHP <= PluginConfig.DamagedAtOrBelowHP) return CosmeticPool.Damaged;
-            if (currentHP <= PluginConfig.BandagesAtOrBelowHP) return CosmeticPool.Bandages;
-            return CosmeticPool.Rusty;
+            if (currentHP > PluginConfig.FirstScarHP) return 0;
+            return DamageDepth(currentHP) / PluginConfig.SlotStepHP + 1;
         }
 
-        public static bool WreckedFaceActive(int currentHP) =>
-            currentHP <= PluginConfig.WreckedFaceAtOrBelowHP
-            && !string.IsNullOrWhiteSpace(PluginConfig.WreckedFaceCosmetic);
+        // Worsening stage for a given slot. Earlier slots (lower index) have
+        // been scarred longer, so they sit further down the ladder; SlotStaggerHP
+        // is how much each later slot lags the one before it.
+        public static ScarSeverity SeverityForSlot(int currentHP, int slotIndex)
+        {
+            int depth = DamageDepth(currentHP) - slotIndex * PluginConfig.SlotStaggerHP;
+            int stage = depth / PluginConfig.SeverityStepHP;
+            return (ScarSeverity)Mathf.Clamp(stage, 0, (int)ScarSeverity.Broken);
+        }
+
+        public static bool BrokenHeadActive(int currentHP) =>
+            currentHP <= PluginConfig.BrokenHeadHP;
 
         public static Tier TierForHealth(int currentHP)
         {
-            int count = CosmeticCountForHealth(currentHP);
+            int count = ScarSlotCount(currentHP);
             if (count <= 0) return Tier.Healthy;
             if (count <= 2) return Tier.Scratched;
             if (count <= 4) return Tier.Damaged;

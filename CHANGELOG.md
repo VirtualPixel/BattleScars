@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.1.0
+
+Reworked how scars escalate. It used to be a hard pool swap at each HP threshold, so every scarred part looked the same at once. Now each part worsens on its own track (bandages, cracks, dented plating, broken-mesh) and the tracks are staggered, so the bot wears a mix instead of one uniform stage.
+
+- Rust dropped from the pool. It read as wear, not battle damage.
+- Broken-mesh limbs start showing around 30 HP instead of the whole set snapping in at 25.
+- The broken head is now the last scar to land, held back until you're under 10 HP.
+- Lots more overlap between stages. A bandaged arm and a broken-mesh leg at the same time is normal now.
+- Toned the low-health red overlay right down. It's an edge vignette now instead of a flat red wash over the whole screen, closer to the low-health look in CoD.
+- Fixed scars bleeding onto the cosmetic shop machine's preview bot. That one's for showing what you'd unlock, it shouldn't look beat up.
+- Scoped the whole thing to gameplay. Scars, the overlay and the glitches used to carry over into the main menu after you died and left. The mod now only runs in levels and the shop, and strips the bot clean on the way back to the lobby.
+- Removed Herobrine.
+
+Nerfs, sparks and the save backup are untouched.
+
 ## 1.0.0
 
 Initial release.

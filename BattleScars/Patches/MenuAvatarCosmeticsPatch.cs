@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using BattleScars.Services;
 using HarmonyLib;
 
@@ -10,6 +9,12 @@ namespace BattleScars.Patches
     // prefix the menu preview would show the saved loadout while the in-game
     // body wears scars.
     //
+    // Only the pause-menu loadout avatar gets scars. The cosmetic shop machine,
+    // the icon maker and the expression preview are all menu avatars too, but
+    // they exist to show a cosmetic on its own, not your current condition.
+    // PlayerAvatarMenu registers exactly the loadout avatar as its singleton
+    // instance and never the others, so that's the gate.
+    //
     // The prefix augments the input array, never mutating cosmeticEquippedRaw
     // or MetaManager state, so the saved loadout stays untouched.
     [HarmonyPatch(typeof(PlayerCosmetics), "SetupCosmeticsLogic")]
@@ -18,9 +23,12 @@ namespace BattleScars.Patches
         [HarmonyPrefix]
         public static void Prefix(PlayerCosmetics __instance, ref int[] _cosmeticEquipped)
         {
-            if (!ConfigService.CosmeticsEnabled()) return;
+            if (!ConfigService.CosmeticsEnabled() || !ConfigService.InActiveScene()) return;
             if (__instance == null) return;
-            if (__instance.playerAvatarVisuals == null || !__instance.playerAvatarVisuals.isMenuAvatar) return;
+
+            var visuals = __instance.playerAvatarVisuals;
+            if (visuals == null || !visuals.isMenuAvatar) return;
+            if (visuals.playerAvatarMenu == null || visuals.playerAvatarMenu != PlayerAvatarMenu.instance) return;
 
             var local = PlayerLookup.LocalAvatar();
             if (local == null || string.IsNullOrEmpty(local.steamID)) return;
@@ -29,19 +37,8 @@ namespace BattleScars.Patches
                 ? ConfigService.TestHealthOverride()
                 : (local.playerHealth != null ? local.playerHealth.health : 100);
 
-            int count = ConfigService.CosmeticCountForHealth(hp);
-            if (count <= 0) return;
-
-            var pool = ConfigService.PoolForHealth(hp);
-            bool face = ConfigService.WreckedFaceActive(hp);
-
-            var picks = Cosmetics.PickForCount(local.steamID, count, pool);
-            var faceIndices = face ? Cosmetics.WreckedFaceIndices() : (IReadOnlyList<int>)System.Array.Empty<int>();
-
-            var forced = new List<int>(picks.Count + faceIndices.Count);
-            foreach (var idx in faceIndices) forced.Add(idx);
-            foreach (var idx in picks)
-                if (!forced.Contains(idx)) forced.Add(idx);
+            var forced = Cosmetics.ForcedSetForHealth(local.steamID, hp);
+            if (forced.Count == 0) return;
 
             var combined = Cosmetics.Merge(MetaManager.instance?.cosmeticAssets, _cosmeticEquipped, forced);
             _cosmeticEquipped = combined.ToArray();

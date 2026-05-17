@@ -1,6 +1,6 @@
 # BattleScars
 
-Your bot looks more wrecked the closer you get to dying. Rust spots at 75 HP, bandages at 60, cracks and damaged plating at 50, broken-mesh limbs at 25. Heal up and the scars come off in reverse.
+Your bot looks more wrecked the closer you get to dying. First scar around 75 HP, then it piles on: bandages, cracks, dented plating, and broken-mesh limbs by the time you're scraping bottom. Heal up and the scars come off in reverse.
 
 **Default is visuals only.** No movement penalties, just the look. Flip `Mode = Full` if you want the challenge: slower walk, capped stamina, and screen glitches that scale with how close to dead you are.
 
@@ -14,20 +14,15 @@ If only the host installs, only the host gets scars. There's no "host enforces o
 
 ## How it works
 
-Scar count is a continuous function of your current HP. Each pool transition swaps the cosmetic set to something visibly worse.
+The first scar shows up at 75 HP, and another body part joins it every 8 HP you lose after that.
 
-| HP at or below | Pool | What you see |
-|---|---|---|
-| 75 | Rusty | Rust overlays. Looks like wear. |
-| 60 | Bandages | Wrapped body parts. Patched up. |
-| 50 | Damaged | Cracks, damaged overlays. Visibly bashed. |
-| 25 | + Wrecked Face | Broken-mesh body parts on top of the damaged pool. Limbs visibly destroyed. |
+Each scarred part has its own condition that worsens as you keep dropping: bandages, then cracks, then dented plating, then a full broken-mesh limb. The parts don't worsen in lockstep. Whatever got scarred first runs a stage or two ahead of the newest scar, so most of the time the bot wears a mix. A bandaged arm next to a cracked leg next to a broken-mesh shoulder.
 
-One scar appears at 75 HP, one more for every 8 HP lost below, up to whatever each pool can fill with distinct CosmeticTypes. At 1 HP you're maxed out across body slots with the broken-mesh set on top.
+Rough landmarks: the first broken-mesh limb turns up around 30 HP. The broken head holds out the longest, until you're under 10. Everything between those overlaps.
 
-Scars are seeded by your Steam ID, so identities don't shuffle inside a run. Healing peels them off in reverse order. Same player always gets the same look.
+Scars are seeded by your Steam ID. Same player, same HP, same look, and healing walks it back in reverse.
 
-Max-HP upgrades buy a real buffer. 160 max HP means you can take 85 damage before hitting the first scar.
+Max-HP upgrades buy a real buffer. 160 max HP means you can take 85 damage before the first scar.
 
 ## What broadcasts
 
@@ -83,7 +78,7 @@ First time the mod loads each session it copies `MetaSave.es3` to `BepInEx/confi
 
 - R.E.P.O. v0.4.x
 - BepInEx 5.4.2305
-- MoreHead and other cosmetic mods add to the pool the discovery pass can find. Defaults match the vanilla "Rusty / Bandages / Damaged / Cracks / Broken" sets.
+- MoreHead and other cosmetic mods add to the pool the discovery pass can find. Defaults match the vanilla Bandages / Cracks / Damaged / Broken sets.
 
 Harmony targets: `PlayerCosmetics.SetupCosmetics`, `PlayerCosmetics.SetupCosmeticsLogic`, `PlayerHealth.Hurt`, `StatsManager.Start`. Should coexist with any mod that doesn't replace those entirely.
 

@@ -52,6 +52,7 @@ namespace BattleScars.Services
 
         public void OnEvent(EventData photonEvent)
         {
+            if (!ConfigService.InActiveScene()) return;
             switch (photonEvent.Code)
             {
                 case EventVoicePitch: HandleVoicePitch(photonEvent.CustomData); break;

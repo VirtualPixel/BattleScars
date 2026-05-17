@@ -18,7 +18,7 @@ namespace BattleScars.Patches
         [HarmonyPostfix]
         public static void Postfix(PlayerHealth __instance, int __state)
         {
-            if (!ConfigService.IsEnabled() || __instance == null) return;
+            if (!ConfigService.IsEnabled() || !ConfigService.InActiveScene() || __instance == null) return;
             int actualDelta = __state - __instance.health;
             if (actualDelta <= 0) return;
 
