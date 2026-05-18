@@ -11,12 +11,12 @@ namespace BattleScars.Services
     // don't see your screen.
     public class ScreenOverlay : MonoBehaviour
     {
-        // Vignette gradient in normalized radius: clear inside Inner, ramping to
-        // full at Outer. A mid-edge sits at radius 1.0, the corners past it.
-        // Inner is set high so the red reads as a thin frame on the edges
-        // rather than a wash creeping toward the middle.
-        private const float VignetteInner = 0.60f;
-        private const float VignetteOuter = 1.10f;
+        // Vignette gradient in normalized radius: clear inside Inner, ramping
+        // toward Outer. A mid-edge sits at radius 1.0, the corners near 1.4.
+        // Outer is pushed well past the corners so the red never reaches a flat
+        // ceiling on screen; it always reads as a gradient, never a band.
+        private const float VignetteInner = 0.48f;
+        private const float VignetteOuter = 1.50f;
 
         private float _glitchTimer;
         private Texture2D? _vignette;
@@ -137,8 +137,9 @@ namespace BattleScars.Services
                     float dy = (y - center) / center;
                     float d = Mathf.Sqrt(dx * dx + dy * dy);
                     float edge = Mathf.InverseLerp(VignetteInner, VignetteOuter, d);
-                    // Cubed so the band falls off sharply and hugs the edge.
-                    pixels[y * size + x] = new Color(1f, 1f, 1f, edge * edge * edge);
+                    // Smoothstep: an eased S-curve, so there's no hard line
+                    // where the red starts. It blends out of the clear centre.
+                    pixels[y * size + x] = new Color(1f, 1f, 1f, edge * edge * (3f - 2f * edge));
                 }
             }
             tex.SetPixels(pixels);

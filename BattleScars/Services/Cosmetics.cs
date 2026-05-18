@@ -181,6 +181,61 @@ namespace BattleScars.Services
             }
         }
 
+        // Per-CosmeticType view of an index list: body part -> "SetName#idx".
+        // Last write wins if a type somehow appears twice.
+        private static Dictionary<SemiFunc.CosmeticType, string> ByType(
+            IList<CosmeticAsset> assets, IEnumerable<int> indices)
+        {
+            var map = new Dictionary<SemiFunc.CosmeticType, string>();
+            foreach (var idx in indices)
+            {
+                if (idx < 0 || idx >= assets.Count) continue;
+                var asset = assets[idx];
+                if (asset == null) continue;
+                string set = !string.IsNullOrEmpty(asset.assetName) ? asset.assetName : asset.name;
+                map[asset.type] = $"{set}#{idx}";
+            }
+            return map;
+        }
+
+        // Diagnostic: a cosmetic set broken down by body part, sorted so two
+        // log lines can be read against each other.
+        public static string Describe(IEnumerable<int> indices)
+        {
+            var assets = MetaManager.instance?.cosmeticAssets;
+            if (assets == null) return "?";
+            var byType = ByType(assets, indices);
+            if (byType.Count == 0) return "(none)";
+            var parts = byType.Select(kv => $"{kv.Key}={kv.Value}").ToList();
+            parts.Sort(StringComparer.Ordinal);
+            return string.Join(" ", parts);
+        }
+
+        // Diagnostic: what changed per body part between two cosmetic sets.
+        // A part worsening in place (Cracks->Damaged) reads differently from a
+        // part being dropped while a different one picks the scar up, which is
+        // exactly the distinction worth watching.
+        public static string DescribeDiff(IEnumerable<int> before, IEnumerable<int> after)
+        {
+            var assets = MetaManager.instance?.cosmeticAssets;
+            if (assets == null) return "?";
+            var b = ByType(assets, before);
+            var a = ByType(assets, after);
+            var lines = new List<string>();
+            foreach (var type in a.Keys.Union(b.Keys))
+            {
+                b.TryGetValue(type, out var bv);
+                a.TryGetValue(type, out var av);
+                if (bv == av) continue;
+                if (bv == null) lines.Add($"{type} +{av}");
+                else if (av == null) lines.Add($"{type} -{bv}");
+                else lines.Add($"{type} {bv}->{av}");
+            }
+            if (lines.Count == 0) return "(no change)";
+            lines.Sort(StringComparer.Ordinal);
+            return string.Join("  ", lines);
+        }
+
         // Merge forced picks with the player's own loadout for SetupCosmetics.
         // Player cosmetics that share a CosmeticType with a forced pick are
         // dropped, so the forced cosmetic wins the slot instead of being
@@ -223,7 +278,7 @@ namespace BattleScars.Services
             var combined = Merge(assets, ownList, forced);
 
             ConfigService.LogDiag(
-                $"apply steam={avatar.steamID} forced=[{string.Join(",", forced)}] combined=[{string.Join(",", combined)}]");
+                $"apply steam={avatar.steamID} forced={{ {Describe(forced)} }} (combined {combined.Count} total)");
 
             using (CosmeticReassertGuard.Enter())
             {

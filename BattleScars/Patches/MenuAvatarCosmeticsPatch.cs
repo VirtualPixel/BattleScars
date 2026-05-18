@@ -38,7 +38,7 @@ namespace BattleScars.Patches
                 : (local.playerHealth != null ? local.playerHealth.health : 100);
 
             var forced = Cosmetics.ForcedSetForHealth(local.steamID, hp);
-            ConfigService.LogDiag($"menu preview hp={hp} forced=[{string.Join(",", forced)}]");
+            ConfigService.LogDiag($"menu preview hp={hp} {Cosmetics.Describe(forced)}");
             if (forced.Count == 0) return;
 
             var combined = Cosmetics.Merge(MetaManager.instance?.cosmeticAssets, _cosmeticEquipped, forced);

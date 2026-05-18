@@ -114,7 +114,7 @@ namespace BattleScars.Configuration
                 "Red damage vignette around the edges of your own screen as you take damage."
             );
             OverlayIntensity = config.Bind(
-                "Effects", "OverlayIntensity", 0.5f,
+                "Effects", "OverlayIntensity", 0.35f,
                 new ConfigDescription(
                     "How strong the damage vignette gets at its worst. 0 hides it, 1 is intense.",
                     new AcceptableValueRange<float>(0f, 1f))

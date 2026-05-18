@@ -62,7 +62,7 @@ SlowWhenHurt = true
 DrainStamina = true
 SpawnSparks = true
 ScreenOverlay = true
-OverlayIntensity = 0.5
+OverlayIntensity = 0.35
 
 [Testing]
 TestHealth = -1
