@@ -138,7 +138,7 @@ namespace BattleScars.Services
                     float d = Mathf.Sqrt(dx * dx + dy * dy);
                     float edge = Mathf.InverseLerp(VignetteInner, VignetteOuter, d);
                     // Smoothstep: an eased S-curve, so there's no hard line
-                    // where the red starts. It blends out of the clear centre.
+                    // where the red starts. It blends out of the clear center.
                     pixels[y * size + x] = new Color(1f, 1f, 1f, edge * edge * (3f - 2f * edge));
                 }
             }

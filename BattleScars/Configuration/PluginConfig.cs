@@ -43,8 +43,9 @@ namespace BattleScars.Configuration
 
     internal static class PluginConfig
     {
-        // One curve per intensity. Light holds scars off longer and worsens them
-        // slowly; Heavy brings them on after the first few hits and fast.
+        // One curve per intensity. Light holds scars off longer and worsens
+        // them slowly. Heavy starts them after the first few hits and races up
+        // the stages.
         private static readonly ScarCurve LightCurve  = new(60, 11, 22, 9, 5);
         private static readonly ScarCurve NormalCurve = new(75, 8, 15, 7, 9);
         private static readonly ScarCurve HeavyCurve  = new(95, 6, 11, 5, 14);
