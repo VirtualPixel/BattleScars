@@ -23,15 +23,16 @@ namespace BattleScars.Services
         public static bool PhotosensitivityOn() =>
             GameplayManager.instance != null && GameplayManager.instance.photosensitivity;
 
-        // The mod only runs during active gameplay: levels and the shop. The
-        // lobby, menus, splash, tutorial and arena get nothing, which is what
-        // keeps scars and the screen overlay from leaking into the main menu
-        // after a death.
+        // The mod runs for a whole active run: levels, the shop, and the truck.
+        // RunIsLobby is the truck ("In Truck" in the vanilla status text), not
+        // the pre-game lobby menu. The lobby menu, main menu, splash, tutorial
+        // and arena get nothing, which keeps scars and the overlay out of the
+        // menus.
         public static bool InActiveScene()
         {
             var run = RunManager.instance;
             if (run == null || run.levelCurrent == null) return false;
-            return SemiFunc.RunIsLevel() || SemiFunc.RunIsShop();
+            return SemiFunc.RunIsLevel() || SemiFunc.RunIsShop() || SemiFunc.RunIsLobby();
         }
 
         // Verbose cosmetic-sync trace. Silent unless the player turns on
