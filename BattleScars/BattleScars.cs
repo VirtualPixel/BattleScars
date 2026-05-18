@@ -37,18 +37,11 @@ namespace BattleScars
         {
             PluginConfig.Mode.SettingChanged += (_, _) =>
             {
+                if (PluginConfig.Mode.Value != RunMode.Off) return;
                 var avatar = PlayerLookup.LocalAvatar();
                 if (avatar == null) return;
-                if (PluginConfig.Mode.Value == RunMode.Off)
-                {
-                    Cosmetics.RestoreToLocal(avatar);
-                    Effects.CancelVoice(avatar);
-                    Driver.Instance?.InvalidateAppliedCosmetics();
-                }
-                else if (PluginConfig.Mode.Value == RunMode.VisualOnly)
-                {
-                    Effects.CancelVoice(avatar);
-                }
+                Cosmetics.RestoreToLocal(avatar);
+                Driver.Instance?.InvalidateAppliedCosmetics();
             };
         }
     }

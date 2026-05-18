@@ -13,8 +13,10 @@ namespace BattleScars.Services
     {
         // Vignette gradient in normalized radius: clear inside Inner, ramping to
         // full at Outer. A mid-edge sits at radius 1.0, the corners past it.
-        private const float VignetteInner = 0.42f;
-        private const float VignetteOuter = 1.05f;
+        // Inner is set high so the red reads as a thin frame on the edges
+        // rather than a wash creeping toward the middle.
+        private const float VignetteInner = 0.60f;
+        private const float VignetteOuter = 1.10f;
 
         private float _glitchTimer;
         private Texture2D? _vignette;
@@ -35,6 +37,9 @@ namespace BattleScars.Services
 
             var tier = ConfigService.TierForHealth(Driver.EffectiveHealthFor(avatar));
             if (tier == Tier.Healthy) return;
+
+            // The screen glitches flash; photosensitivity mode drops them.
+            if (ConfigService.PhotosensitivityOn()) return;
 
             _glitchTimer -= Time.deltaTime;
             if (_glitchTimer > 0f) return;
@@ -98,9 +103,12 @@ namespace BattleScars.Services
                 Tier.Wrecked => 1.00f,
                 _ => 0f,
             };
-            // Slow heartbeat that quickens as the tiers climb.
-            float pulse = 0.82f + 0.18f * Mathf.Sin(Time.time * (2f + t * 3f));
-            float alpha = PluginConfig.ScreenOverlayMaxAlpha * t * pulse;
+            // Heartbeat that quickens as the tiers climb. Photosensitivity mode
+            // holds it at a steady glow.
+            float pulse = ConfigService.PhotosensitivityOn()
+                ? 0.9f
+                : 0.82f + 0.18f * Mathf.Sin(Time.time * (3.5f + t * 4f));
+            float alpha = PluginConfig.OverlayIntensity.Value * t * pulse;
 
             var prev = GUI.color;
             GUI.color = new Color(0.7f, 0.04f, 0.04f, alpha);
@@ -129,7 +137,8 @@ namespace BattleScars.Services
                     float dy = (y - center) / center;
                     float d = Mathf.Sqrt(dx * dx + dy * dy);
                     float edge = Mathf.InverseLerp(VignetteInner, VignetteOuter, d);
-                    pixels[y * size + x] = new Color(1f, 1f, 1f, edge * edge);
+                    // Cubed so the band falls off sharply and hugs the edge.
+                    pixels[y * size + x] = new Color(1f, 1f, 1f, edge * edge * edge);
                 }
             }
             tex.SetPixels(pixels);

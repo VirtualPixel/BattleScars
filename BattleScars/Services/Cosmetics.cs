@@ -222,6 +222,9 @@ namespace BattleScars.Services
             var ownList = avatar.playerCosmetics.cosmeticEquippedRaw ?? new List<int>();
             var combined = Merge(assets, ownList, forced);
 
+            ConfigService.LogDiag(
+                $"apply steam={avatar.steamID} forced=[{string.Join(",", forced)}] combined=[{string.Join(",", combined)}]");
+
             using (CosmeticReassertGuard.Enter())
             {
                 avatar.playerCosmetics.SetupCosmetics(_synced: SemiFunc.IsMultiplayer(), _forced: true, _cosmetics: combined);
@@ -233,6 +236,9 @@ namespace BattleScars.Services
         {
             if (avatar == null || avatar.playerCosmetics == null) return;
             if (!avatar.photonView.IsMine && SemiFunc.IsMultiplayer()) return;
+
+            ConfigService.LogDiag($"restore steam={avatar.steamID} (back to the saved loadout)");
+
             using (CosmeticReassertGuard.Enter())
             {
                 avatar.playerCosmetics.SetupCosmetics(_synced: SemiFunc.IsMultiplayer(), _forced: true, _cosmetics: null);

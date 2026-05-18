@@ -5,6 +5,11 @@
 - Toned the low-health red overlay right down. It's an edge vignette around the screen now instead of a flat red wash over everything, closer to the low-health look in CoD.
 - Fixed scars bleeding onto the cosmetic shop machine's preview bot. That one's for showing what you'd unlock, it shouldn't look beat up.
 - Scoped the whole mod to gameplay. Scars, the overlay and the glitches used to carry over into the main menu after you died and left. It only runs in levels and the shop now, and strips the bot clean on the way back to the lobby.
+- New ScarIntensity setting. Light holds scars off until you're badly hurt, Heavy piles them on after the first couple of hits, Normal is the tuned default.
+- New OverlayIntensity slider, so you can dial the red vignette to taste or turn it off.
+- The overlay and the screen glitches now respect REPO's photosensitivity setting: steady glow, no pulsing or flashing when it's on.
+- Dropped the voice-distortion effect. It never worked reliably and a half-finished toggle wasn't worth keeping.
+- Added a DebugLogging toggle that traces scar changes to the console, for bug reports.
 
 ## 1.1.0
 

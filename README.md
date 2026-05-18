@@ -18,7 +18,7 @@ The first scar shows up at 75 HP, and another body part joins it every 8 HP you 
 
 Each scarred part has its own condition that worsens as you keep dropping: bandages, then cracks, then dented plating, then a full broken-mesh limb. The parts don't worsen in lockstep. Whatever got scarred first runs a stage or two ahead of the newest scar, so most of the time the bot wears a mix. A bandaged arm next to a cracked leg next to a broken-mesh shoulder.
 
-Rough landmarks: the first broken-mesh limb turns up around 30 HP. The broken head holds out the longest, until you're under 10. Everything between those overlaps.
+Rough landmarks: the first broken-mesh limb turns up around 30 HP. The broken head holds out the longest, until you're under 10. Everything between those overlaps. Those numbers are the Normal intensity; `ScarIntensity` in the config shifts the whole curve earlier or later.
 
 Scars are seeded by your Steam ID. Same player, same HP, same look, and healing walks it back in reverse.
 
@@ -54,6 +54,7 @@ Lives at `BepInEx/config/Vippy.BattleScars.cfg`. REPOConfig picks it up as an in
 ```
 [General]
 Mode = VisualOnly
+ScarIntensity = Normal
 
 [Effects]
 ForceBrokenCosmetics = true
@@ -61,14 +62,20 @@ SlowWhenHurt = true
 DrainStamina = true
 SpawnSparks = true
 ScreenOverlay = true
+OverlayIntensity = 0.5
 
 [Testing]
 TestHealth = -1
+DebugLogging = false
 ```
 
-That's all of it. Seven settings. Most players never need to touch anything except `Mode`.
+That's all of it. Ten settings. Most players never need to touch anything except `Mode`.
+
+`ScarIntensity` shifts the whole curve. Light holds scars off until you're badly hurt, Heavy starts them after the first couple of hits, Normal is the tuned default. `OverlayIntensity` is how strong the red screen vignette gets, 0 to 1.
 
 `TestHealth` is for previewing thresholds without taking damage. -1 disables. 0-100 forces that HP value through the tier pipeline, no real damage taken. Numpad 0-9 in-game drives the same field: Numpad 0 disables, Numpad 1 jumps to HP 1, Numpad 2-9 jumps to HP 20, 30, ... 90.
+
+`DebugLogging` dumps every scar apply and restore to the BepInEx console. Off by default; turn it on if you're filing a bug report about scars not showing up right.
 
 ## Save backup
 
@@ -79,6 +86,7 @@ First time the mod loads each session it copies `MetaSave.es3` to `BepInEx/confi
 - R.E.P.O. v0.4.x
 - BepInEx 5.4.2305
 - MoreHead and other cosmetic mods add to the pool the discovery pass can find. Defaults match the vanilla Bandages / Cracks / Damaged / Broken sets.
+- Respects REPO's photosensitivity setting. With it on, the screen vignette holds steady instead of pulsing and the glitch flashes are dropped.
 
 Harmony targets: `PlayerCosmetics.SetupCosmetics`, `PlayerCosmetics.SetupCosmeticsLogic`, `PlayerHealth.Hurt`, `StatsManager.Start`. Should coexist with any mod that doesn't replace those entirely.
 

@@ -4,7 +4,7 @@ namespace BattleScars.Services
 {
     // Per-tier nerfs and spark VFX. Speed and stamina are local; the game's
     // position sync carries the slower movement to peers without mod traffic.
-    // Voice and sparks ride NetEvents so modded peers see and hear them.
+    // Sparks ride NetEvents so modded peers see them.
     public static class Effects
     {
         public static void ApplySpeedTick(PlayerAvatar avatar, Tier tier)
@@ -29,56 +29,6 @@ namespace BattleScars.Services
             float cap = controller.EnergyStart * ConfigService.StaminaMultiplierFor(tier);
             if (controller.EnergyCurrent > cap)
                 controller.EnergyCurrent = cap;
-        }
-
-        public static void ApplyVoiceTick(PlayerAvatar avatar, Tier tier)
-        {
-            if (!ConfigService.VoiceEffectsEnabled() || tier == Tier.Healthy) return;
-            if (avatar == null || !avatar.isLocal) return;
-            if (avatar.voiceChat == null || !avatar.voiceChatFetched) return;
-
-            float pitch = tier switch
-            {
-                Tier.Scratched => 0.95f,
-                Tier.Damaged => 0.88f,
-                Tier.Battered => 0.78f,
-                Tier.Wrecked => 0.68f,
-                _ => 1f,
-            };
-            float oscAmount = tier switch
-            {
-                Tier.Scratched => 0.02f,
-                Tier.Damaged => 0.05f,
-                Tier.Battered => 0.10f,
-                Tier.Wrecked => 0.16f,
-                _ => 0f,
-            };
-            float oscSpeed = tier switch
-            {
-                Tier.Scratched => 2f,
-                Tier.Damaged => 4f,
-                Tier.Battered => 7f,
-                Tier.Wrecked => 11f,
-                _ => 0f,
-            };
-
-            // pitch, priority, lerpIn, duration, oscAmount, oscSpeed.
-            // Short duration lets the 0.5s repeat cadence keep the override alive
-            // without stacking.
-            avatar.voiceChat.OverridePitch(pitch, 0.4f, 0.4f, 0.6f, oscAmount, oscSpeed);
-            if (tier >= Tier.Battered) avatar.voiceChat.OverrideVoiceDistortion(0.6f);
-            if (tier >= Tier.Wrecked) avatar.voiceChat.OverrideVolumeStutter(0.6f);
-
-            if (SemiFunc.IsMultiplayer() && avatar.photonView != null)
-                NetEvents.SendVoicePitch(avatar.photonView.ViewID, pitch, oscAmount, oscSpeed, 0.6f);
-        }
-
-        public static void CancelVoice(PlayerAvatar avatar)
-        {
-            if (avatar?.voiceChat == null) return;
-            avatar.voiceChat.OverridePitchCancel();
-            if (SemiFunc.IsMultiplayer() && avatar.photonView != null)
-                NetEvents.SendVoiceCancel(avatar.photonView.ViewID);
         }
 
         // Spawns locally then broadcasts the world position. Damaged players are

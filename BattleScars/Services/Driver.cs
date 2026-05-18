@@ -14,10 +14,8 @@ namespace BattleScars.Services
         public static Driver? Instance { get; private set; }
 
         private const float SlowTickInterval = 1f;
-        private const float VoiceTickInterval = 0.5f;
 
         private float _slowTickTimer;
-        private float _voiceTickTimer;
         private bool _wasActive;
 
         // Last scar set forced onto each player, keyed by steamID. The slow tick
@@ -40,11 +38,14 @@ namespace BattleScars.Services
             {
                 if (_wasActive)
                 {
+                    ConfigService.LogDiag("left the active scene, tearing down");
                     TeardownLocal();
                     _wasActive = false;
                 }
                 return;
             }
+            if (!_wasActive)
+                ConfigService.LogDiag($"entered active scene level={RunManager.instance?.levelCurrent?.name}");
             _wasActive = true;
 
             var local = PlayerLookup.LocalAvatar();
@@ -59,14 +60,6 @@ namespace BattleScars.Services
             {
                 Effects.ApplySpeedTick(local, tier);
                 Effects.ApplyStaminaTick(local, tier);
-            }
-
-            _voiceTickTimer -= Time.deltaTime;
-            if (_voiceTickTimer <= 0f && local != null)
-            {
-                _voiceTickTimer = VoiceTickInterval;
-                if (tier == Tier.Healthy) Effects.CancelVoice(local);
-                else Effects.ApplyVoiceTick(local, tier);
             }
 
             _slowTickTimer -= Time.deltaTime;
@@ -109,12 +102,24 @@ namespace BattleScars.Services
             if (local == null || string.IsNullOrEmpty(local.steamID)) return;
             if (!ConfigService.CosmeticsEnabled()) return;
 
+            int hp = EffectiveHealthFor(local);
             var forced = enabled && !deadOrDisabled
-                ? Cosmetics.ForcedSetForHealth(local.steamID, EffectiveHealthFor(local))
+                ? Cosmetics.ForcedSetForHealth(local.steamID, hp)
                 : new List<int>();
 
-            if (_applied.TryGetValue(local.steamID, out var was) && SameSet(was, forced)) return;
+            if (_applied.TryGetValue(local.steamID, out var was) && SameSet(was, forced))
+            {
+                ConfigService.LogDiag(
+                    $"tick hp={hp} dead={deadOrDisabled} forced=[{string.Join(",", forced)}] -> skip (cache match)");
+                return;
+            }
+
+            string cached = was != null ? string.Join(",", was) : "none";
             _applied[local.steamID] = forced;
+
+            ConfigService.LogDiag(
+                $"tick hp={hp} dead={deadOrDisabled} forced=[{string.Join(",", forced)}] cached=[{cached}] " +
+                $"-> {(forced.Count == 0 ? "restore" : "apply")}");
 
             if (forced.Count == 0) Cosmetics.RestoreToLocal(local);
             else Cosmetics.Apply(local, forced);
@@ -127,11 +132,9 @@ namespace BattleScars.Services
         private void TeardownLocal()
         {
             var local = PlayerLookup.LocalAvatar();
+            ConfigService.LogDiag($"teardown localAvatar={(local != null ? "found" : "null")}");
             if (local != null)
-            {
                 Cosmetics.RestoreToLocal(local);
-                Effects.CancelVoice(local);
-            }
             _applied.Clear();
         }
 
@@ -143,13 +146,30 @@ namespace BattleScars.Services
         {
             var local = PlayerLookup.LocalAvatar();
             if (local == null || string.IsNullOrEmpty(local.steamID)) return;
-            if (!ConfigService.IsEnabled() || !ConfigService.CosmeticsEnabled()) return;
-            if (!ConfigService.InActiveScene()) return;
-            if (local.deadSet || local.isDisabled) return;
+            if (!ConfigService.IsEnabled() || !ConfigService.CosmeticsEnabled())
+            {
+                ConfigService.LogDiag("reassert skipped: mod or cosmetics disabled");
+                return;
+            }
+            if (!ConfigService.InActiveScene())
+            {
+                ConfigService.LogDiag("reassert skipped: not in an active scene");
+                return;
+            }
+            if (local.deadSet || local.isDisabled)
+            {
+                ConfigService.LogDiag("reassert skipped: local avatar dead or disabled");
+                return;
+            }
 
             var forced = Cosmetics.ForcedSetForHealth(local.steamID, EffectiveHealthFor(local));
-            if (forced.Count == 0) return;
+            if (forced.Count == 0)
+            {
+                ConfigService.LogDiag("reassert: nothing to re-apply at this HP");
+                return;
+            }
             _applied[local.steamID] = forced;
+            ConfigService.LogDiag($"reassert -> apply forced=[{string.Join(",", forced)}]");
             Cosmetics.Apply(local, forced);
         }
 

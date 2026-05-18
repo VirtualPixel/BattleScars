@@ -29,6 +29,7 @@ namespace BattleScars.Patches
             var avatar = __instance.playerAvatarVisuals.playerAvatar;
             if (avatar == null || !avatar.isLocal) return;
 
+            ConfigService.LogDiag("vanilla cosmetic refresh on the local body, reasserting");
             Driver.Instance?.ReassertLocalCosmeticsImmediate();
         }
     }

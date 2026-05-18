@@ -14,9 +14,14 @@ namespace BattleScars.Services
 
         public static bool SpeedNerfEnabled() => IsEnabled() && !IsVisualOnly() && PluginConfig.EnableSpeedNerf.Value;
         public static bool StaminaNerfEnabled() => IsEnabled() && !IsVisualOnly() && PluginConfig.EnableStaminaNerf.Value;
-        public static bool VoiceEffectsEnabled() => IsEnabled() && !IsVisualOnly() && PluginConfig.EnableVoiceEffects.Value;
 
         public static int TestHealthOverride() => PluginConfig.TestHealth.Value;
+
+        // REPO's photosensitivity accessibility setting. When it's on, the
+        // overlay holds steady instead of pulsing and the screen glitches are
+        // suppressed.
+        public static bool PhotosensitivityOn() =>
+            GameplayManager.instance != null && GameplayManager.instance.photosensitivity;
 
         // The mod only runs during active gameplay: levels and the shop. The
         // lobby, menus, splash, tutorial and arena get nothing, which is what
@@ -29,16 +34,25 @@ namespace BattleScars.Services
             return SemiFunc.RunIsLevel() || SemiFunc.RunIsShop();
         }
 
+        // Verbose cosmetic-sync trace. Silent unless the player turns on
+        // DebugLogging for a bug report.
+        public static void LogDiag(string msg)
+        {
+            if (PluginConfig.DebugLogging.Value)
+                BattleScars.Log.LogInfo("[Scars] " + msg);
+        }
+
         // Damage taken below the first-scar threshold, floored at zero.
         public static int DamageDepth(int currentHP) =>
-            Mathf.Max(0, PluginConfig.FirstScarHP - currentHP);
+            Mathf.Max(0, PluginConfig.Curve.FirstScarHP - currentHP);
 
         // How many body slots carry a scar at this HP. One at the threshold,
         // one more for every SlotStepHP lost after.
         public static int ScarSlotCount(int currentHP)
         {
-            if (currentHP > PluginConfig.FirstScarHP) return 0;
-            return DamageDepth(currentHP) / PluginConfig.SlotStepHP + 1;
+            var curve = PluginConfig.Curve;
+            if (currentHP > curve.FirstScarHP) return 0;
+            return DamageDepth(currentHP) / curve.SlotStepHP + 1;
         }
 
         // Worsening stage for a given slot. Earlier slots (lower index) have
@@ -46,13 +60,14 @@ namespace BattleScars.Services
         // is how much each later slot lags the one before it.
         public static ScarSeverity SeverityForSlot(int currentHP, int slotIndex)
         {
-            int depth = DamageDepth(currentHP) - slotIndex * PluginConfig.SlotStaggerHP;
-            int stage = depth / PluginConfig.SeverityStepHP;
+            var curve = PluginConfig.Curve;
+            int depth = DamageDepth(currentHP) - slotIndex * curve.SlotStaggerHP;
+            int stage = depth / curve.SeverityStepHP;
             return (ScarSeverity)Mathf.Clamp(stage, 0, (int)ScarSeverity.Broken);
         }
 
         public static bool BrokenHeadActive(int currentHP) =>
-            currentHP <= PluginConfig.BrokenHeadHP;
+            currentHP <= PluginConfig.Curve.BrokenHeadHP;
 
         public static Tier TierForHealth(int currentHP)
         {
