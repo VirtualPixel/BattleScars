@@ -1,10 +1,10 @@
 # BattleScars
 
-Your robot visibly falls apart as its health drops. A crack or two first, then bandages, dented plating, and limbs hanging off by the time you're one hit from dead. Heal up and it mends, scar by scar.
+Your robot visibly falls apart as its health drops. A crack or two first, then bandages, dented plating, and limbs hanging off by the time you're one hit from dead. Heal up and it mends.
 
 ![A robot taking hits and scarring up, then healing clean again](https://raw.githubusercontent.com/VirtualPixel/BattleScars/main/media/damage_then_heal.gif)
 
-R.E.P.O. puts a health bar on the back of everyone's neck, but you have to be behind them and close to read it. BattleScars writes the damage across the whole body instead, so a teammate's state is something you catch from across the room, from any angle, in the corner of your eye.
+R.E.P.O. puts a health bar on the back of everyone's neck, but you have to be behind them and close to read it. BattleScars writes the damage across the whole body instead, so you can read a teammate from across the room.
 
 The part most cosmetic mods can't manage: it shows on every bot in the lobby, even your unmodded friends'. Damage rides the game's own cosmetic system, so everyone sees it whether they installed the mod or not. Nothing gets unlocked, saved, or written to your file. The scars wipe clean when you patch up.
 
@@ -44,11 +44,9 @@ The mod adds no network traffic of its own. Scars travel on the game's existing 
 
 One setting decides the overall feel:
 
-- **Off** : Mod inactive.
-- **VisualOnly** (default) : Scars and the screen vignette. No movement or stamina changes.
-- **Full** : Adds the move-speed and stamina nerfs on top.
-
-VisualOnly is the default. Flip Mode to Full when you want the speed and stamina hit as well.
+- **Off**: Mod inactive.
+- **VisualOnly** (default): Scars and the screen vignette. No movement or stamina changes.
+- **Full**: Adds the move-speed and stamina nerfs on top.
 
 ## Config
 
