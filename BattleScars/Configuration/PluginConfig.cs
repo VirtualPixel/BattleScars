@@ -74,7 +74,7 @@ namespace BattleScars.Configuration
 
         public static ConfigEntry<RunMode> Mode = null!;
         public static ConfigEntry<ScarIntensity> Intensity = null!;
-        public static ConfigEntry<float> OverlayIntensity = null!;
+        public static ConfigEntry<float> VignetteIntensity = null!;
         public static ConfigEntry<int> TestHealth = null!;
         public static ConfigEntry<bool> DebugLogging = null!;
 
@@ -89,8 +89,8 @@ namespace BattleScars.Configuration
                 "How early and how hard scars build up. Light starts late and worsens slowly, Heavy starts after the first few hits."
             );
 
-            OverlayIntensity = config.Bind(
-                "Effects", "OverlayIntensity", 0.25f,
+            VignetteIntensity = config.Bind(
+                "Effects", "VignetteIntensity", 0.25f,
                 new ConfigDescription(
                     "How strong the red damage vignette gets at its worst, near death. It ramps up from there as HP drops. 0 hides it entirely, 1 is intense.",
                     new AcceptableValueRange<float>(0f, 1f))

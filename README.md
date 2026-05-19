@@ -60,7 +60,7 @@ Mode = VisualOnly
 ScarIntensity = Normal
 
 [Effects]
-OverlayIntensity = 0.25
+VignetteIntensity = 0.25
 
 [Testing]
 TestHealth = -1
@@ -69,7 +69,7 @@ DebugLogging = false
 
 That's all of it. Five settings. Most players never need to touch anything except `Mode`.
 
-`ScarIntensity` shifts the whole curve. Light holds scars off until you're badly hurt, Heavy starts them after the first couple of hits, Normal is the tuned default. `OverlayIntensity` is how strong the red screen vignette gets at its worst, near death, 0 to 1. It ramps up as your HP drops and eases back off as you heal.
+`ScarIntensity` shifts the whole curve. Light holds scars off until you're badly hurt, Heavy starts them after the first couple of hits, Normal is the tuned default. `VignetteIntensity` is how strong the red low-health vignette gets at its worst, near death, 0 to 1. It ramps up as your HP drops and eases back off as you heal.
 
 `TestHealth` is for previewing thresholds without taking damage. -1 disables. 0-100 forces that HP value through the tier pipeline, no real damage taken. Numpad 0-9 in-game drives the same field: Numpad 0 disables, Numpad 1 jumps to HP 1, Numpad 2-9 jumps to HP 20, 30, ... 90.
 

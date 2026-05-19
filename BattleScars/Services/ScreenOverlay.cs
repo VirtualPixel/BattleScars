@@ -135,7 +135,7 @@ namespace BattleScars.Services
             float pulse = ConfigService.PhotosensitivityOn()
                 ? 0.9f
                 : 0.82f + 0.18f * Mathf.Sin(_pulsePhase);
-            float alpha = PluginConfig.OverlayIntensity.Value * _overlayT * pulse;
+            float alpha = PluginConfig.VignetteIntensity.Value * _overlayT * pulse;
 
             var prev = GUI.color;
             GUI.color = new Color(0.7f, 0.04f, 0.04f, alpha);
