@@ -38,7 +38,7 @@ namespace BattleScars.Services
             HandleDevHotkeys();
 
             // DontDestroyOnLoad keeps this ticking through the menus. Outside an
-            // active level/shop, strip the local bot back to clean and stop.
+            // active level/shop, strip the local Semibot back to clean and stop.
             if (StatsManager.instance == null || !ConfigService.InActiveScene())
             {
                 if (_wasActive)
@@ -148,7 +148,7 @@ namespace BattleScars.Services
         public void InvalidateAppliedCosmetics() => _applied.Clear();
 
         // Leaving an active scene: pull scars and the voice override off the
-        // local bot so it returns to the lobby looking like itself.
+        // local Semibot so it returns to the lobby looking like itself.
         private void TeardownLocal()
         {
             var local = PlayerLookup.LocalAvatar();

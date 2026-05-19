@@ -1,18 +1,18 @@
 # BattleScars
 
-Your robot visibly falls apart as its health drops. A crack or two first, then bandages, dented plating, and limbs hanging off by the time you're one hit from dead. Heal up and it mends.
+Your Semibot visibly falls apart as its health drops. A crack or two first, then bandages, dented plating, and limbs hanging off by the time you're one hit from dead. Heal up and it mends.
 
-![A robot taking hits and scarring up, then healing clean again](https://raw.githubusercontent.com/VirtualPixel/BattleScars/main/media/damage_then_heal.gif)
+![A Semibot taking hits and scarring up, then healing clean again](https://raw.githubusercontent.com/VirtualPixel/BattleScars/main/media/damage_then_heal.gif)
 
 R.E.P.O. puts a health bar on the back of everyone's neck, but you have to be behind them and close to read it. BattleScars writes the damage across the whole body instead, so you can read a teammate from across the room.
 
-The part most cosmetic mods can't manage: it shows on every bot in the lobby, even your unmodded friends'. Damage rides the game's own cosmetic system, so everyone sees it whether they installed the mod or not. Nothing gets unlocked, saved, or written to your file. The scars wipe clean when you patch up.
+The part most cosmetic mods can't manage: it shows on every Semibot in the lobby, even your unmodded friends'. Damage rides the game's own cosmetic system, so everyone sees it whether they installed the mod or not. Nothing gets unlocked, saved, or written to your file. The scars wipe clean when you patch up.
 
-**Visuals only by default.** No gameplay changes, just the look, plus a red low-health vignette creeping in at the screen edges. Want the bot to play as rough as it looks? Flip `Mode = Full` for a slower walk and capped stamina as the damage stacks up.
+**Visuals only by default.** No gameplay changes, just the look, plus a red low-health vignette creeping in at the screen edges. Want the Semibot to play as rough as it looks? Flip `Mode = Full` for a slower walk and capped stamina as the damage stacks up.
 
 ## Install
 
-Per-player. Every player who wants the effects on their own bot needs the mod. Your scars broadcast to everyone via the game's normal cosmetic RPC, so unmodded teammates still see them; they just can't have their own.
+Per-player. Every player who wants the effects on their own Semibot needs the mod. Your scars broadcast to everyone via the game's normal cosmetic RPC, so unmodded teammates still see them; they just can't have their own.
 
 If only the host installs, only the host gets scars. There's no "host enforces on everyone" path. Unmodded clients never run the code that drives `SetupCosmeticsRPC`, so nothing can be forced onto them.
 
@@ -20,7 +20,7 @@ If only the host installs, only the host gets scars. There's no "host enforces o
 
 The first scar shows up at 75 HP, and another body part joins it every 8 HP you lose after that.
 
-Each scarred part worsens by stacking layers rather than swapping one look for the next. A crack shows up first, then a bandage joins it, then the crack deepens into dented plating, and finally the limb breaks outright into a broken mesh. The parts don't worsen in lockstep. Whatever got scarred first runs a stage or two ahead of the newest scar, so most of the time the bot wears a mix. A bandaged arm next to a cracked leg next to a broken-mesh shoulder.
+Each scarred part worsens by stacking layers rather than swapping one look for the next. A crack shows up first, then a bandage joins it, then the crack deepens into dented plating, and finally the limb breaks outright into a broken mesh. The parts don't worsen in lockstep. Whatever got scarred first runs a stage or two ahead of the newest scar, so most of the time the Semibot wears a mix. A bandaged arm next to a cracked leg next to a broken-mesh shoulder.
 
 Rough landmarks: the first broken-mesh limb turns up around 30 HP. The broken head holds out the longest, until you're under 10. Everything between those overlaps. Those numbers are the Normal intensity; `ScarIntensity` in the config shifts the whole curve earlier or later.
 

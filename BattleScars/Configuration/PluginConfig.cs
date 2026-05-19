@@ -20,7 +20,7 @@ namespace BattleScars.Configuration
     // One scar curve. The first scar shows at FirstScarHP and another body slot
     // joins it every SlotStepHP below that. Each slot worsens one stage
     // (cracks -> bandages -> damaged -> broken) every SeverityStepHP, and
-    // SlotStaggerHP delays each later slot's worsening so the bot wears a mix of
+    // SlotStaggerHP delays each later slot's worsening so the Semibot wears a mix of
     // stages at once instead of flipping wholesale. The broken-mesh head is held
     // back until BrokenHeadHP.
     public sealed class ScarCurve

@@ -2,6 +2,6 @@
   "name": "BattleScars",
   "version_number": "1.2.0",
   "website_url": "https://github.com/VirtualPixel/BattleScars",
-  "description": "See it coming. Your robot cracks, bandages up, dents and loses limbs as its HP drops, so a glance across the room tells you who's about to die. Heal and it mends. Friends see your damage even without the mod. Optional speed and stamina penalties.",
+  "description": "See it coming. Your Semibot cracks, bandages up, dents and loses limbs as its HP drops, so a glance across the room tells you who's about to die. Heal and it mends. Friends see your damage even without the mod. Optional speed and stamina penalties.",
   "dependencies": ["BepInEx-BepInExPack-5.4.2305"]
 }

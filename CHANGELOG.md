@@ -2,13 +2,13 @@
 
 ## 1.2.0
 
-- Reworked how scars sit on the bot. Each limb stacks layers as it worsens now instead of swapping one look for the next: a crack first, then a bandage, then dented plating, then a broken-mesh limb. Which limbs scar, and in what order, is reseeded every level, so the same HP wears differently from one level to the next.
+- Reworked how scars sit on the Semibot. Each limb stacks layers as it worsens now instead of swapping one look for the next: a crack first, then a bandage, then dented plating, then a broken-mesh limb. Which limbs scar, and in what order, is reseeded every level, so the same HP wears differently from one level to the next.
 - Toned the low-health red overlay right down. It's an edge vignette around the screen now instead of a flat red wash over everything, closer to the low-health look in CoD.
 - The vignette tracks your HP on a continuous curve and eases in and out instead of stepping. It fades on smoothly even when you load straight into a run that's already hurt, and fades back off as you heal.
 - Screen glitches hold off until you're badly hurt. The scars and the vignette still start from the first scratch; only the camera faults wait for real damage.
 - Dropped the sparks. They never sold as electrical arcing next to the rest of the effects, just generic particles, so out they came.
-- Fixed scars bleeding onto the cosmetic shop machine's preview bot. That one's for showing what you'd unlock, it shouldn't look beat up.
-- Scoped the whole mod to an active run. Scars, the overlay and the glitches used to carry over into the main menu after you died and left. Now it runs across levels, the truck and the shop, and only strips the bot clean once the run ends.
+- Fixed scars bleeding onto the cosmetic shop machine's preview Semibot. That one's for showing what you'd unlock, it shouldn't look beat up.
+- Scoped the whole mod to an active run. Scars, the overlay and the glitches used to carry over into the main menu after you died and left. Now it runs across levels, the truck and the shop, and only strips the Semibot clean once the run ends.
 - New ScarIntensity setting. Light holds scars off until you're badly hurt, Heavy piles them on after the first couple of hits, Normal is the tuned default.
 - New VignetteIntensity slider, so you can dial the red vignette to taste or turn it off.
 - The overlay and the screen glitches now respect REPO's photosensitivity setting: steady glow, no pulsing or flashing when it's on.
@@ -17,7 +17,7 @@
 
 ## 1.1.0
 
-Reworked how scars escalate. It used to be a hard pool swap at each HP threshold, so every scarred part looked the same at once. Now each part worsens on its own track (bandages, cracks, dented plating, broken-mesh) and the tracks are staggered, so the bot wears a mix instead of one uniform stage.
+Reworked how scars escalate. It used to be a hard pool swap at each HP threshold, so every scarred part looked the same at once. Now each part worsens on its own track (bandages, cracks, dented plating, broken-mesh) and the tracks are staggered, so the Semibot wears a mix instead of one uniform stage.
 
 - Rust dropped from the pool. It read as wear, not battle damage.
 - Broken-mesh limbs start showing around 30 HP instead of the whole set snapping in at 25.

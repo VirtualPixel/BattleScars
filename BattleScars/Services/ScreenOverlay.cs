@@ -19,7 +19,7 @@ namespace BattleScars.Services
         private const float VignetteOuter = 1.50f;
 
         // SmoothDamp time for the vignette intensity. It eases in and out
-        // rather than snapping, so loading straight into a near-dead bot fades
+        // rather than snapping, so loading straight into a near-dead Semibot fades
         // the red in instead of slamming it on at full on the first frame.
         private const float OverlaySmoothTime = 0.35f;
 

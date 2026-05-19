@@ -52,7 +52,7 @@ namespace BattleScars.Services
         }
 
         // Bandages read as a deliberate accent, so only this many limbs wear one
-        // even on a fully scarred bot. Overlays and broken meshes are uncapped;
+        // even on a fully scarred Semibot. Overlays and broken meshes are uncapped;
         // they carry the damage signal everywhere.
         private const int MaxBandagedLimbs = 3;
 
@@ -226,7 +226,7 @@ namespace BattleScars.Services
                     result.Add(overlay);
 
                 // Bandage layer: an accent that joins one rung in. Capped so a
-                // badly hurt bot isn't mummified, and skipped on the head when a
+                // badly hurt Semibot isn't mummified, and skipped on the head when a
                 // worn hat would otherwise be evicted (they share a slot).
                 if (severity >= ScarSeverity.Bandages && region.Bandage >= 0
                     && bandaged < MaxBandagedLimbs
