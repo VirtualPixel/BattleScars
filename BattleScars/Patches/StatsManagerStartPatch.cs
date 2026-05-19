@@ -4,8 +4,8 @@ using UnityEngine;
 
 namespace BattleScars.Patches
 {
-    // Spawn the runtime MonoBehaviours once StatsManager is up. Photon is ready
-    // by then and the local PlayerAvatar.steamID is populated.
+    // Spawn the runtime MonoBehaviours once StatsManager is up, by which point
+    // the local PlayerAvatar.steamID is populated.
     [HarmonyPatch(typeof(StatsManager), "Start")]
     internal static class StatsManagerStartPatch
     {
@@ -18,7 +18,6 @@ namespace BattleScars.Patches
             _services = new GameObject("BattleScars_Services");
             _services.AddComponent<Driver>();
             _services.AddComponent<ScreenOverlay>();
-            _services.AddComponent<NetEvents>();
             Object.DontDestroyOnLoad(_services);
         }
     }

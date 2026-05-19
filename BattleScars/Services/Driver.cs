@@ -18,6 +18,10 @@ namespace BattleScars.Services
         private float _slowTickTimer;
         private bool _wasActive;
 
+        // True while the local player is at full health. The scar layout
+        // reseeds on the edge back to full, never mid-damage.
+        private bool _wasFullHealth = true;
+
         // Last scar set forced onto each player, keyed by steamID. The slow tick
         // only re-applies when the set actually changes.
         private readonly Dictionary<string, List<int>> _applied = new();
@@ -26,6 +30,7 @@ namespace BattleScars.Services
         {
             Instance = this;
             Cosmetics.DiscoverIfNeeded();
+            Cosmetics.RerollRoundSeed();
         }
 
         private void Update()
@@ -51,6 +56,8 @@ namespace BattleScars.Services
             var local = PlayerLookup.LocalAvatar();
             bool enabled = ConfigService.IsEnabled();
             bool deadOrDisabled = local != null && (local.deadSet || local.isDisabled);
+
+            RerollSeedWhenFullHealth(local);
 
             Tier tier = Tier.Healthy;
             if (enabled && !deadOrDisabled && local != null)
@@ -89,6 +96,19 @@ namespace BattleScars.Services
             InvalidateAppliedCosmetics();
         }
 
+        // The scar layout reseeds only on the edge where the local player is
+        // back at full health, where no scars are showing. That holds the
+        // layout stable across a whole damage episode (shop and truck trips
+        // between levels included) and freshens it for the next one.
+        private void RerollSeedWhenFullHealth(PlayerAvatar? local)
+        {
+            bool full = local != null && local.playerHealth != null
+                && EffectiveHealthFor(local) >= local.playerHealth.maxHealth;
+            if (full && !_wasFullHealth)
+                Cosmetics.RerollRoundSeed();
+            _wasFullHealth = full;
+        }
+
         public static int EffectiveHealthFor(PlayerAvatar avatar)
         {
             int test = PluginConfig.TestHealth.Value;
@@ -100,11 +120,11 @@ namespace BattleScars.Services
         {
             SaveBackup.TryBackupOnce(local);
             if (local == null || string.IsNullOrEmpty(local.steamID)) return;
-            if (!ConfigService.CosmeticsEnabled()) return;
+            if (!ConfigService.IsEnabled()) return;
 
             int hp = EffectiveHealthFor(local);
             var forced = enabled && !deadOrDisabled
-                ? Cosmetics.ForcedSetForHealth(local.steamID, hp)
+                ? Cosmetics.ForcedSetForHealth(local.steamID, hp, Cosmetics.PlayerWearsHat(local))
                 : new List<int>();
 
             if (_applied.TryGetValue(local.steamID, out var was) && SameSet(was, forced))
@@ -146,9 +166,9 @@ namespace BattleScars.Services
         {
             var local = PlayerLookup.LocalAvatar();
             if (local == null || string.IsNullOrEmpty(local.steamID)) return;
-            if (!ConfigService.IsEnabled() || !ConfigService.CosmeticsEnabled())
+            if (!ConfigService.IsEnabled())
             {
-                ConfigService.LogDiag("reassert skipped: mod or cosmetics disabled");
+                ConfigService.LogDiag("reassert skipped: mod disabled");
                 return;
             }
             if (!ConfigService.InActiveScene())
@@ -162,7 +182,7 @@ namespace BattleScars.Services
                 return;
             }
 
-            var forced = Cosmetics.ForcedSetForHealth(local.steamID, EffectiveHealthFor(local));
+            var forced = Cosmetics.ForcedSetForHealth(local.steamID, EffectiveHealthFor(local), Cosmetics.PlayerWearsHat(local));
             if (forced.Count == 0)
             {
                 ConfigService.LogDiag("reassert: nothing to re-apply at this HP");

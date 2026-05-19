@@ -18,7 +18,19 @@ namespace BattleScars.Services
         private const float VignetteInner = 0.48f;
         private const float VignetteOuter = 1.50f;
 
+        // SmoothDamp time for the vignette intensity. It eases in and out
+        // rather than snapping, so loading straight into a near-dead bot fades
+        // the red in instead of slamming it on at full on the first frame.
+        private const float OverlaySmoothTime = 0.35f;
+
+        // Below this the vignette counts as fully gone and OnGUI skips it;
+        // SmoothDamp only ever approaches zero, it never lands on it.
+        private const float OverlayEpsilon = 0.002f;
+
         private float _glitchTimer;
+        private float _overlayT;
+        private float _overlayVel;
+        private float _pulsePhase;
         private Texture2D? _vignette;
 
         private void Awake() => _vignette = BuildVignette();
@@ -30,13 +42,34 @@ namespace BattleScars.Services
 
         private void Update()
         {
+            // Ease the vignette toward its target and advance the pulse phase
+            // once per frame; OnGUI only reads the results. Kept out of OnGUI
+            // since that fires more than once per frame and would over-advance
+            // both. SmoothDamp gives an eased in and out with no hard edges.
+            _overlayT = Mathf.SmoothDamp(_overlayT, OverlayTarget(), ref _overlayVel, OverlaySmoothTime);
+            if (_overlayT < OverlayEpsilon && _overlayVel <= 0f) _overlayT = 0f;
+
+            // Accumulate the heartbeat phase instead of multiplying Time.time
+            // by the (HP-dependent) frequency. That product jumps the phase
+            // whenever the frequency shifts, which read as a jitter while the
+            // vignette ramped.
+            _pulsePhase += Time.deltaTime * (3.5f + _overlayT * 4f);
+
+            UpdateGlitch();
+        }
+
+        private void UpdateGlitch()
+        {
             if (!ConfigService.ScreenOverlayEnabled() || !ConfigService.InActiveScene()) return;
             var avatar = PlayerLookup.LocalAvatar();
             if (avatar == null) return;
             if (avatar.deadSet || avatar.isDisabled) return;
 
             var tier = ConfigService.TierForHealth(Driver.EffectiveHealthFor(avatar));
-            if (tier == Tier.Healthy) return;
+            // Camera faults hold off until Battered. Glitching from the first
+            // scratch felt like overkill; scars and the edge vignette still ramp
+            // from the first scar, only the glitch waits for real damage.
+            if (tier < Tier.Battered) return;
 
             // The screen glitches flash; photosensitivity mode drops them.
             if (ConfigService.PhotosensitivityOn()) return;
@@ -61,24 +94,15 @@ namespace BattleScars.Services
                 if (r < 0.65f) glitch.PlayLong();
                 else glitch.PlayShort();
             }
-            else if (tier >= Tier.Battered)
+            else // Battered, the gentlest glitch tier
             {
                 if (r < 0.45f) glitch.PlayLong();
                 else if (r < 0.85f) glitch.PlayShort();
                 else glitch.PlayTiny();
             }
-            else if (tier >= Tier.Damaged)
-            {
-                if (r < 0.50f) glitch.PlayShort();
-                else glitch.PlayTiny();
-            }
-            else
-            {
-                glitch.PlayTiny();
-            }
         }
 
-        // 1 HP -> ~1s, 10 HP -> ~2s, 25 HP -> ~4s, 50 HP -> ~7s, 60 HP -> ~9s.
+        // 1 HP -> ~1s, 10 HP -> ~2s, 25 HP -> ~4s, 43 HP -> ~7s.
         private static float GlitchInterval(PlayerAvatar avatar)
         {
             if (avatar.playerHealth == null) return 6f;
@@ -86,29 +110,32 @@ namespace BattleScars.Services
             return Mathf.Clamp(0.5f + hp * 0.15f, 1f, 12f);
         }
 
+        // Where the vignette intensity wants to be right now, 0..1: a
+        // continuous ramp from nothing at the first-scar HP to full at 1 HP,
+        // and 0 when the overlay shouldn't show. A continuous curve, not a
+        // per-tier step, so the red doesn't pop a notch darker each time a
+        // tier line is crossed. Update eases _overlayT toward this.
+        private static float OverlayTarget()
+        {
+            if (!ConfigService.ScreenOverlayEnabled() || !ConfigService.InActiveScene()) return 0f;
+            var avatar = PlayerLookup.LocalAvatar();
+            if (avatar == null) return 0f;
+            return Mathf.InverseLerp(PluginConfig.Curve.FirstScarHP, 1f,
+                Driver.EffectiveHealthFor(avatar));
+        }
+
         private void OnGUI()
         {
             if (!ConfigService.ScreenOverlayEnabled() || _vignette == null) return;
-            if (!ConfigService.InActiveScene()) return;
-            var avatar = PlayerLookup.LocalAvatar();
-            if (avatar == null) return;
-            var tier = ConfigService.TierForHealth(Driver.EffectiveHealthFor(avatar));
-            if (tier == Tier.Healthy) return;
+            if (_overlayT < OverlayEpsilon) return;
 
-            float t = tier switch
-            {
-                Tier.Scratched => 0.25f,
-                Tier.Damaged => 0.50f,
-                Tier.Battered => 0.75f,
-                Tier.Wrecked => 1.00f,
-                _ => 0f,
-            };
-            // Heartbeat that quickens as the tiers climb. Photosensitivity mode
-            // holds it at a steady glow.
+            // Heartbeat that quickens as the damage deepens. Photosensitivity
+            // mode holds it at a steady glow. Phase comes off the Update
+            // accumulator so a shifting rate never jumps it.
             float pulse = ConfigService.PhotosensitivityOn()
                 ? 0.9f
-                : 0.82f + 0.18f * Mathf.Sin(Time.time * (3.5f + t * 4f));
-            float alpha = PluginConfig.OverlayIntensity.Value * t * pulse;
+                : 0.82f + 0.18f * Mathf.Sin(_pulsePhase);
+            float alpha = PluginConfig.OverlayIntensity.Value * _overlayT * pulse;
 
             var prev = GUI.color;
             GUI.color = new Color(0.7f, 0.04f, 0.04f, alpha);

@@ -19,7 +19,7 @@ namespace BattleScars.Configuration
 
     // One scar curve. The first scar shows at FirstScarHP and another body slot
     // joins it every SlotStepHP below that. Each slot worsens one stage
-    // (bandages -> cracks -> damaged -> broken) every SeverityStepHP, and
+    // (cracks -> bandages -> damaged -> broken) every SeverityStepHP, and
     // SlotStaggerHP delays each later slot's worsening so the bot wears a mix of
     // stages at once instead of flipping wholesale. The broken-mesh head is held
     // back until BrokenHeadHP.
@@ -74,11 +74,6 @@ namespace BattleScars.Configuration
 
         public static ConfigEntry<RunMode> Mode = null!;
         public static ConfigEntry<ScarIntensity> Intensity = null!;
-        public static ConfigEntry<bool> EnableCosmetics = null!;
-        public static ConfigEntry<bool> EnableSpeedNerf = null!;
-        public static ConfigEntry<bool> EnableStaminaNerf = null!;
-        public static ConfigEntry<bool> EnableSparkParticles = null!;
-        public static ConfigEntry<bool> EnableScreenOverlay = null!;
         public static ConfigEntry<float> OverlayIntensity = null!;
         public static ConfigEntry<int> TestHealth = null!;
         public static ConfigEntry<bool> DebugLogging = null!;
@@ -87,37 +82,17 @@ namespace BattleScars.Configuration
         {
             Mode = config.Bind(
                 "General", "Mode", RunMode.VisualOnly,
-                "Off: mod inactive. VisualOnly: scars + screen overlay + sparks, no nerfs. Full: everything per the Effects toggles below."
+                "Off: mod inactive. VisualOnly: scars and the screen vignette, no nerfs. Full: adds the move-speed and stamina nerfs on top."
             );
             Intensity = config.Bind(
                 "General", "ScarIntensity", ScarIntensity.Normal,
                 "How early and how hard scars build up. Light starts late and worsens slowly, Heavy starts after the first few hits."
             );
 
-            EnableCosmetics = config.Bind(
-                "Effects", "ForceBrokenCosmetics", true,
-                "Force-apply broken cosmetics as damage stacks. Nothing is unlocked or saved."
-            );
-            EnableSpeedNerf = config.Bind(
-                "Effects", "SlowWhenHurt", true,
-                "Reduce move and sprint speed as you take damage. Ignored in VisualOnly."
-            );
-            EnableStaminaNerf = config.Bind(
-                "Effects", "DrainStamina", true,
-                "Cap max stamina as you take damage. Ignored in VisualOnly."
-            );
-            EnableSparkParticles = config.Bind(
-                "Effects", "SpawnSparks", true,
-                "Spark particles on hit. Other players need the mod to see them."
-            );
-            EnableScreenOverlay = config.Bind(
-                "Effects", "ScreenOverlay", true,
-                "Red damage vignette around the edges of your own screen as you take damage."
-            );
             OverlayIntensity = config.Bind(
-                "Effects", "OverlayIntensity", 0.35f,
+                "Effects", "OverlayIntensity", 0.25f,
                 new ConfigDescription(
-                    "How strong the damage vignette gets at its worst. 0 hides it, 1 is intense.",
+                    "How strong the red damage vignette gets at its worst, near death. It ramps up from there as HP drops. 0 hides it entirely, 1 is intense.",
                     new AcceptableValueRange<float>(0f, 1f))
             );
 

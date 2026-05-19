@@ -23,7 +23,7 @@ namespace BattleScars.Patches
         [HarmonyPrefix]
         public static void Prefix(PlayerCosmetics __instance, ref int[] _cosmeticEquipped)
         {
-            if (!ConfigService.CosmeticsEnabled() || !ConfigService.InActiveScene()) return;
+            if (!ConfigService.IsEnabled() || !ConfigService.InActiveScene()) return;
             if (__instance == null) return;
 
             var visuals = __instance.playerAvatarVisuals;
@@ -33,11 +33,8 @@ namespace BattleScars.Patches
             var local = PlayerLookup.LocalAvatar();
             if (local == null || string.IsNullOrEmpty(local.steamID)) return;
 
-            int hp = ConfigService.TestHealthOverride() >= 0
-                ? ConfigService.TestHealthOverride()
-                : (local.playerHealth != null ? local.playerHealth.health : 100);
-
-            var forced = Cosmetics.ForcedSetForHealth(local.steamID, hp);
+            int hp = Driver.EffectiveHealthFor(local);
+            var forced = Cosmetics.ForcedSetForHealth(local.steamID, hp, Cosmetics.PlayerWearsHat(local));
             ConfigService.LogDiag($"menu preview hp={hp} {Cosmetics.Describe(forced)}");
             if (forced.Count == 0) return;
 

@@ -5,24 +5,28 @@ using BattleScars.Configuration;
 
 namespace BattleScars.Services
 {
-    // Worsening ladder, mildest first. A scarred slot climbs one rung at a time
-    // as HP drops; ConfigService.SeverityForSlot decides which rung.
+    // The accumulation ladder: a scarred limb climbs one rung per step as HP
+    // drops, adding a layer each rung. ConfigService.SeverityForSlot picks it.
+    // Cracks first so the first scar is a clear surface fracture rather than a
+    // bandage (which can read as an ordinary cosmetic); the bandage joins next.
     public enum ScarSeverity
     {
-        Bandages = 0,
-        Cracks = 1,
+        Cracks = 0,
+        Bandages = 1,
         Damaged = 2,
         Broken = 3,
     }
 
-    // Four overlay/mesh sets discovered once against MetaManager.cosmeticAssets
-    // via the substring tokens in PluginConfig. The "broken" set is split into a
-    // head group and a body group by CosmeticType so the broken-mesh head can be
-    // held back to its own HP threshold.
+    // Scar cosmetics, grouped into limb regions. REPO ships three stacking
+    // layers per limb: a bandage accessory, a crack/damaged overlay (one slot,
+    // the two are mutually exclusive), and a broken mesh. Every scar asset folds
+    // onto its limb region by CosmeticType.
     //
-    // Picks are seeded by steamID so a player's scars stay put across a run:
-    // each set is shuffled once, and taking the first N of that shuffle means
-    // healing peels scars off the end and damage adds the next one.
+    // A scarred limb is pinned for the level and accumulates layers as HP drops:
+    // a crack overlay, then a bandage, the overlay worsening to the damaged
+    // texture, then a broken mesh, shedding them again on heal. Which limbs
+    // scar, and in what order, is seeded per level (RerollRoundSeed), so each
+    // level wears its damage differently.
     //
     // SetupCosmeticsRPC only fires from the cosmetic's owner, so applying scars
     // on the local player is enough for every peer in the lobby to see them
@@ -30,12 +34,36 @@ namespace BattleScars.Services
     // current state up automatically.
     public static class Cosmetics
     {
-        private static List<int>? _bandagesPool;
-        private static List<int>? _cracksPool;
-        private static List<int>? _damagedPool;
-        private static List<int>? _brokenBodyPool;
-        private static List<int>? _brokenHeadPool;
+        // One scarable limb. Each layer is an asset index, or -1 when REPO ships
+        // none for it. The crack and damaged overlays share the limb's single
+        // overlay slot, so only one of the two is ever worn at once.
+        private sealed class Region
+        {
+            public string Key = "";
+            public int Bandage = -1;
+            public int CrackOverlay = -1;
+            public int DamagedOverlay = -1;
+            public int BrokenMesh = -1;
+            public bool IsHead; // broken mesh waits for the BrokenHeadHP threshold
+
+            // The HeadTop bandage is a Hat-slot cosmetic; forcing it evicts the
+            // player's hat, so it yields to a hat the player is wearing.
+            public bool IsHeadTop => Key == "HeadTop";
+        }
+
+        // Bandages read as a deliberate accent, so only this many limbs wear one
+        // even on a fully scarred bot. Overlays and broken meshes are uncapped;
+        // they carry the damage signal everywhere.
+        private const int MaxBandagedLimbs = 3;
+
+        private static List<Region>? _regions;
         private static bool _discoveryRan;
+
+        // Reseeded on every level change so the scar layout differs level to
+        // level and run to run. Driver drives this.
+        private static int _roundSeed;
+
+        public static void RerollRoundSeed() => _roundSeed = Guid.NewGuid().GetHashCode();
 
         public static void DiscoverIfNeeded()
         {
@@ -43,30 +71,91 @@ namespace BattleScars.Services
             if (MetaManager.instance == null || MetaManager.instance.cosmeticAssets == null) return;
 
             var assets = MetaManager.instance.cosmeticAssets;
-            _bandagesPool = BuildPool(assets, PluginConfig.BandagesAllowList);
-            _cracksPool   = BuildPool(assets, PluginConfig.CracksAllowList);
-            _damagedPool  = BuildPool(assets, PluginConfig.DamagedAllowList);
+            var byKey = new Dictionary<string, Region>();
 
-            _brokenHeadPool = new List<int>();
-            _brokenBodyPool = new List<int>();
-            foreach (var idx in BuildPool(assets, PluginConfig.BrokenAllowList))
-            {
-                var asset = assets[idx];
-                if (asset == null) continue;
-                if (IsHeadMesh(asset.type)) _brokenHeadPool.Add(idx);
-                else _brokenBodyPool.Add(idx);
-            }
+            // Each set is one severity layer. An asset's CosmeticType folds to
+            // the limb it scars; the Overlay and Mesh variants share a limb with
+            // the plain accessory.
+            foreach (var idx in BuildPool(assets, PluginConfig.BandagesAllowList)) AssignLayer(assets, byKey, idx, ScarSeverity.Bandages);
+            foreach (var idx in BuildPool(assets, PluginConfig.CracksAllowList))   AssignLayer(assets, byKey, idx, ScarSeverity.Cracks);
+            foreach (var idx in BuildPool(assets, PluginConfig.DamagedAllowList))  AssignLayer(assets, byKey, idx, ScarSeverity.Damaged);
+            foreach (var idx in BuildPool(assets, PluginConfig.BrokenAllowList))   AssignLayer(assets, byKey, idx, ScarSeverity.Broken);
 
+            _regions = byKey.Values.ToList();
+            // Stable base order so the per-level shuffle is reproducible from its
+            // seed alone, not from Dictionary iteration order.
+            _regions.Sort((a, b) => string.CompareOrdinal(a.Key, b.Key));
             _discoveryRan = true;
 
-            int total = _bandagesPool.Count + _cracksPool.Count + _damagedPool.Count
-                        + _brokenBodyPool.Count + _brokenHeadPool.Count;
-            BattleScars.Log.LogInfo(
-                $"[Cosmetics] sets bandages={_bandagesPool.Count} cracks={_cracksPool.Count} " +
-                $"damaged={_damagedPool.Count} brokenBody={_brokenBodyPool.Count} brokenHead={_brokenHeadPool.Count}");
-            if (total == 0)
-                BattleScars.Log.LogWarning("[Cosmetics] no set matches, cosmetic effects disabled");
+            BattleScars.Log.LogInfo($"[Cosmetics] scar regions={_regions.Count}");
+            foreach (var r in _regions)
+                ConfigService.LogDiag($"[Cosmetics]   {r.Key}: bandage={r.Bandage >= 0} " +
+                    $"crack={r.CrackOverlay >= 0} damaged={r.DamagedOverlay >= 0} broken={r.BrokenMesh >= 0}");
+            if (_regions.Count == 0)
+                BattleScars.Log.LogWarning("[Cosmetics] no scar cosmetics matched, cosmetic effects disabled");
         }
+
+        // Slot one asset into its limb region's layer. The first asset of a
+        // region+layer wins; REPO ships a couple of duplicates (e.g. "Damaged2")
+        // which are left out.
+        private static void AssignLayer(IList<CosmeticAsset> assets,
+            Dictionary<string, Region> byKey, int idx, ScarSeverity layer)
+        {
+            if (idx < 0 || idx >= assets.Count) return;
+            var asset = assets[idx];
+            if (asset == null) return;
+            string? key = RegionKey(asset.type);
+            if (key == null) return;
+
+            if (!byKey.TryGetValue(key, out var region))
+            {
+                region = new Region { Key = key };
+                byKey[key] = region;
+            }
+            switch (layer)
+            {
+                case ScarSeverity.Bandages:
+                    if (region.Bandage < 0) region.Bandage = idx;
+                    break;
+                case ScarSeverity.Cracks:
+                    if (region.CrackOverlay < 0) region.CrackOverlay = idx;
+                    break;
+                case ScarSeverity.Damaged:
+                    if (region.DamagedOverlay < 0) region.DamagedOverlay = idx;
+                    break;
+                case ScarSeverity.Broken:
+                    if (region.BrokenMesh < 0)
+                    {
+                        region.BrokenMesh = idx;
+                        region.IsHead = IsHeadMesh(asset.type);
+                    }
+                    break;
+            }
+        }
+
+        // CosmeticType -> limb region key. The plain accessory, the Overlay
+        // variant and the Mesh variant of a limb all fold to one region so scars
+        // stack on the same body part. Null for types BattleScars never scars.
+        private static string? RegionKey(SemiFunc.CosmeticType type) => type switch
+        {
+            SemiFunc.CosmeticType.ArmLeft or SemiFunc.CosmeticType.ArmLeftOverlay
+                or SemiFunc.CosmeticType.ArmLeftMesh => "ArmLeft",
+            SemiFunc.CosmeticType.ArmRight or SemiFunc.CosmeticType.ArmRightOverlay
+                or SemiFunc.CosmeticType.ArmRightMesh => "ArmRight",
+            SemiFunc.CosmeticType.LegLeft or SemiFunc.CosmeticType.LegLeftOverlay
+                or SemiFunc.CosmeticType.LegLeftMesh => "LegLeft",
+            SemiFunc.CosmeticType.LegRight or SemiFunc.CosmeticType.LegRightOverlay
+                or SemiFunc.CosmeticType.LegRightMesh => "LegRight",
+            SemiFunc.CosmeticType.BodyTop or SemiFunc.CosmeticType.BodyTopOverlay
+                or SemiFunc.CosmeticType.BodyTopMesh => "BodyTop",
+            SemiFunc.CosmeticType.BodyBottom or SemiFunc.CosmeticType.BodyBottomOverlay
+                or SemiFunc.CosmeticType.BodyBottomMesh => "BodyBottom",
+            SemiFunc.CosmeticType.Hat or SemiFunc.CosmeticType.HeadTopOverlay
+                or SemiFunc.CosmeticType.HeadTopMesh => "HeadTop",
+            SemiFunc.CosmeticType.HeadBottom or SemiFunc.CosmeticType.HeadBottomOverlay
+                or SemiFunc.CosmeticType.HeadBottomMesh => "HeadBottom",
+            _ => null,
+        };
 
         private static bool IsHeadMesh(SemiFunc.CosmeticType type) =>
             type == SemiFunc.CosmeticType.HeadTopMesh
@@ -103,82 +192,85 @@ namespace BattleScars.Services
             return result;
         }
 
-        // The full set of cosmetic indices to force onto a player at this HP.
-        // One pick per scarred slot, drawn from the slot's worsening stage, plus
-        // the broken-mesh head once HP is low enough. Picks span distinct
-        // CosmeticTypes so two scars never fight over one body part.
-        public static List<int> ForcedSetForHealth(string steamID, int currentHP)
+        // The cosmetic indices to force at this HP. Each scarred slot is pinned
+        // to a fixed limb; the limb accumulates layers as it worsens (crack
+        // overlay, then a bandage, then a broken mesh) and sheds them on heal.
+        // playerHasHat lets the head keep a worn hat instead of its bandage.
+        public static List<int> ForcedSetForHealth(string steamID, int currentHP, bool playerHasHat)
         {
             DiscoverIfNeeded();
 
             var result = new List<int>();
-            var assets = MetaManager.instance?.cosmeticAssets;
-            if (assets == null) return result;
+            if (_regions == null || _regions.Count == 0) return result;
 
             int slots = ConfigService.ScarSlotCount(currentHP);
-            var need = new int[4];
-            for (int i = 0; i < slots; i++)
-                need[(int)ConfigService.SeverityForSlot(currentHP, i)]++;
+            if (slots <= 0) return result;
 
-            // Worst stage first so broken meshes claim their body parts before
-            // the overlay sets fill the remaining slots.
-            var used = new HashSet<SemiFunc.CosmeticType>();
-            Take(_brokenBodyPool, need[(int)ScarSeverity.Broken],   steamID, ScarSeverity.Broken,   assets, used, result);
-            Take(_damagedPool,    need[(int)ScarSeverity.Damaged],  steamID, ScarSeverity.Damaged,  assets, used, result);
-            Take(_cracksPool,     need[(int)ScarSeverity.Cracks],   steamID, ScarSeverity.Cracks,   assets, used, result);
-            Take(_bandagesPool,   need[(int)ScarSeverity.Bandages], steamID, ScarSeverity.Bandages, assets, used, result);
+            bool brokenHead = ConfigService.BrokenHeadActive(currentHP);
+            var order = OrderedRegions(steamID);
+            int scarred = Math.Min(slots, order.Count);
+            int bandaged = 0;
 
-            if (ConfigService.BrokenHeadActive(currentHP) && _brokenHeadPool != null)
+            for (int i = 0; i < scarred; i++)
             {
-                foreach (var idx in _brokenHeadPool)
+                var region = order[i];
+                var severity = ConfigService.SeverityForSlot(currentHP, i);
+
+                // Overlay layer: a crack from the very first scar, worsening to
+                // the damaged texture (the same slot) deeper down. The always-on
+                // damage cue, worn by every scarred limb.
+                int overlay = severity >= ScarSeverity.Damaged && region.DamagedOverlay >= 0
+                    ? region.DamagedOverlay
+                    : region.CrackOverlay;
+                if (overlay >= 0)
+                    result.Add(overlay);
+
+                // Bandage layer: an accent that joins one rung in. Capped so a
+                // badly hurt bot isn't mummified, and skipped on the head when a
+                // worn hat would otherwise be evicted (they share a slot).
+                if (severity >= ScarSeverity.Bandages && region.Bandage >= 0
+                    && bandaged < MaxBandagedLimbs
+                    && !(region.IsHeadTop && playerHasHat))
                 {
-                    if (idx < 0 || idx >= assets.Count) continue;
-                    var asset = assets[idx];
-                    if (asset == null || used.Contains(asset.type)) continue;
-                    result.Add(idx);
-                    used.Add(asset.type);
+                    result.Add(region.Bandage);
+                    bandaged++;
                 }
+
+                // Mesh layer: a fully broken limb. Head meshes wait for the
+                // separate broken-head HP threshold.
+                if (severity >= ScarSeverity.Broken && region.BrokenMesh >= 0
+                    && (!region.IsHead || brokenHead))
+                    result.Add(region.BrokenMesh);
             }
             return result;
         }
 
-        // Take the first `count` of a set's steamID-seeded shuffle, skipping any
-        // CosmeticType already claimed by a worse stage. The seed folds in the
-        // stage so the four sets shuffle independently; taking a prefix keeps
-        // picks stable as `count` grows and shrinks with HP.
-        private static void Take(List<int>? pool, int count, string steamID, ScarSeverity stage,
-            IList<CosmeticAsset> assets, HashSet<SemiFunc.CosmeticType> used, List<int> result)
+        // The limb regions to scar, worst first, shuffled by the per-level seed
+        // so the layout holds for a level but differs level to level. SteamID is
+        // folded in so peers in one lobby don't scar identically.
+        private static List<Region> OrderedRegions(string steamID)
         {
-            if (pool == null || pool.Count == 0 || count <= 0) return;
-
             int baseHash = string.IsNullOrEmpty(steamID) ? 1 : steamID.GetHashCode();
-            int seed = unchecked(baseHash * 31 + (int)stage);
-            var rng = new Random(seed);
-            var shuffled = pool.OrderBy(_ => rng.Next()).ToList();
+            var rng = new Random(unchecked(baseHash * 31 + _roundSeed));
+            return _regions!.OrderBy(_ => rng.Next()).ToList();
+        }
 
-            int taken = 0;
-            foreach (var idx in shuffled)
+        // True when the player's own loadout includes a Hat-type cosmetic, so
+        // the head can keep the hat and skip its (Hat-slot) bandage.
+        public static bool PlayerWearsHat(PlayerAvatar avatar)
+        {
+            var assets = MetaManager.instance?.cosmeticAssets;
+            var raw = avatar != null && avatar.playerCosmetics != null
+                ? avatar.playerCosmetics.cosmeticEquippedRaw
+                : null;
+            if (assets == null || raw == null) return false;
+            foreach (var idx in raw)
             {
-                if (taken >= count) break;
                 if (idx < 0 || idx >= assets.Count) continue;
-                var asset = assets[idx];
-                if (asset == null || used.Contains(asset.type)) continue;
-                result.Add(idx);
-                used.Add(asset.type);
-                taken++;
+                var a = assets[idx];
+                if (a != null && a.type == SemiFunc.CosmeticType.Hat) return true;
             }
-            // Set ran out of distinct CosmeticTypes before the count was met.
-            // Fall back to type-conflicting picks rather than under-filling.
-            if (taken < count)
-            {
-                foreach (var idx in shuffled)
-                {
-                    if (taken >= count) break;
-                    if (idx < 0 || idx >= assets.Count || result.Contains(idx)) continue;
-                    result.Add(idx);
-                    taken++;
-                }
-            }
+            return false;
         }
 
         // Per-CosmeticType view of an index list: body part -> "SetName#idx".

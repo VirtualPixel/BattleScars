@@ -8,14 +8,10 @@ namespace BattleScars.Services
         public static bool IsEnabled() => PluginConfig.Mode.Value != RunMode.Off;
         public static bool IsVisualOnly() => PluginConfig.Mode.Value == RunMode.VisualOnly;
 
-        public static bool CosmeticsEnabled() => IsEnabled() && PluginConfig.EnableCosmetics.Value;
-        public static bool SparkParticlesEnabled() => IsEnabled() && PluginConfig.EnableSparkParticles.Value;
-        public static bool ScreenOverlayEnabled() => IsEnabled() && PluginConfig.EnableScreenOverlay.Value;
+        public static bool ScreenOverlayEnabled() => IsEnabled() && PluginConfig.OverlayIntensity.Value > 0f;
 
-        public static bool SpeedNerfEnabled() => IsEnabled() && !IsVisualOnly() && PluginConfig.EnableSpeedNerf.Value;
-        public static bool StaminaNerfEnabled() => IsEnabled() && !IsVisualOnly() && PluginConfig.EnableStaminaNerf.Value;
-
-        public static int TestHealthOverride() => PluginConfig.TestHealth.Value;
+        // The move-speed and stamina nerfs ride together, on only in Full mode.
+        public static bool NerfsEnabled() => IsEnabled() && !IsVisualOnly();
 
         // REPO's photosensitivity accessibility setting. When it's on, the
         // overlay holds steady instead of pulsing and the screen glitches are

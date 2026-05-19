@@ -2,7 +2,11 @@
 
 ## 1.2.0
 
+- Reworked how scars sit on the bot. Each limb stacks layers as it worsens now instead of swapping one look for the next: a crack first, then a bandage, then dented plating, then a broken-mesh limb. Which limbs scar, and in what order, is reseeded every level, so the same HP wears differently from one level to the next.
 - Toned the low-health red overlay right down. It's an edge vignette around the screen now instead of a flat red wash over everything, closer to the low-health look in CoD.
+- The vignette tracks your HP on a continuous curve and eases in and out instead of stepping. It fades on smoothly even when you load straight into a run that's already hurt, and fades back off as you heal.
+- Screen glitches hold off until you're badly hurt. The scars and the vignette still start from the first scratch; only the camera faults wait for real damage.
+- Dropped the sparks. They never sold as electrical arcing next to the rest of the effects, just generic particles, so out they came.
 - Fixed scars bleeding onto the cosmetic shop machine's preview bot. That one's for showing what you'd unlock, it shouldn't look beat up.
 - Scoped the whole mod to an active run. Scars, the overlay and the glitches used to carry over into the main menu after you died and left. Now it runs across levels, the truck and the shop, and only strips the bot clean once the run ends.
 - New ScarIntensity setting. Light holds scars off until you're badly hurt, Heavy piles them on after the first couple of hits, Normal is the tuned default.
