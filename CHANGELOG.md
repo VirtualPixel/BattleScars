@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.1
+
+- The rolling head you leave behind when you die reads as broken now. The mod was wiping back to your saved loadout the instant the death sequence started, so the dead head used to show up untouched no matter how badly you were hurt.
+- Scars push onto the detached dead head as well as the live body. Vanilla only sets the dead head's cosmetics up once per level so it was sitting at whatever your saved loadout looked like; the mod now keeps both in sync.
+
 ## 1.2.0
 
 - Reworked how scars sit on the Semibot. Each limb stacks layers as it worsens now instead of swapping one look for the next: a crack first, then a bandage, then dented plating, then a broken-mesh limb. Which limbs scar, and in what order, is reseeded every level, so the same HP wears differently from one level to the next.

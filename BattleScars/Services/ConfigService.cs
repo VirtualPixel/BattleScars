@@ -55,8 +55,13 @@ namespace BattleScars.Services
         // Worsening stage for a given slot. Earlier slots (lower index) have
         // been scarred longer, so they sit further down the ladder; SlotStaggerHP
         // is how much each later slot lags the one before it.
+        // At zero HP every slot collapses to Broken. The stagger is there to
+        // tell a damage-in-progress story; at the bottom there is no story
+        // left, and pinning the head region(s) at Broken is what gets a broken
+        // mesh into the slot the dead head actually renders.
         public static ScarSeverity SeverityForSlot(int currentHP, int slotIndex)
         {
+            if (currentHP <= 0) return ScarSeverity.Broken;
             var curve = PluginConfig.Curve;
             int depth = DamageDepth(currentHP) - slotIndex * curve.SlotStaggerHP;
             int stage = depth / curve.SeverityStepHP;

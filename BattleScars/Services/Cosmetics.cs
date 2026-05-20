@@ -376,6 +376,7 @@ namespace BattleScars.Services
             {
                 avatar.playerCosmetics.SetupCosmetics(_synced: SemiFunc.IsMultiplayer(), _forced: true, _cosmetics: combined);
                 avatar.playerCosmetics.SetupColors(_synced: SemiFunc.IsMultiplayer());
+                ApplyToDeathHead(avatar, combined);
             }
         }
 
@@ -390,7 +391,22 @@ namespace BattleScars.Services
             {
                 avatar.playerCosmetics.SetupCosmetics(_synced: SemiFunc.IsMultiplayer(), _forced: true, _cosmetics: null);
                 avatar.playerCosmetics.SetupColors(_synced: SemiFunc.IsMultiplayer());
+                ApplyToDeathHead(avatar, null);
             }
+        }
+
+        // The detached head that spawns on death has its own PlayerCosmetics,
+        // pre-instantiated by LevelGenerator and parked at the disabled position
+        // until PlayerDeathHead.Trigger teleports it in. Vanilla never refreshes
+        // it after that initial load, so without this mirror the dead head wears
+        // the saved loadout no matter what scars are on the body.
+        private static void ApplyToDeathHead(PlayerAvatar avatar, List<int>? combined)
+        {
+            var head = avatar.playerDeathHead;
+            var headCosmetics = head != null ? head.playerCosmetics : null;
+            if (head == null || headCosmetics == null) return;
+            headCosmetics.SetupCosmetics(_synced: SemiFunc.IsMultiplayer(), _forced: true, _cosmetics: combined);
+            headCosmetics.SetupColors(_synced: SemiFunc.IsMultiplayer());
         }
     }
 

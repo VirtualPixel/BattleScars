@@ -55,15 +55,16 @@ namespace BattleScars.Services
 
             var local = PlayerLookup.LocalAvatar();
             bool enabled = ConfigService.IsEnabled();
-            bool deadOrDisabled = local != null && (local.deadSet || local.isDisabled);
+            bool dead = local != null && local.deadSet;
+            bool disabled = local != null && local.isDisabled;
 
             RerollSeedWhenFullHealth(local);
 
             Tier tier = Tier.Healthy;
-            if (enabled && !deadOrDisabled && local != null)
+            if (enabled && !dead && !disabled && local != null)
                 tier = ConfigService.TierForHealth(EffectiveHealthFor(local));
 
-            if (local != null)
+            if (local != null && !dead)
             {
                 Effects.ApplySpeedTick(local, tier);
                 Effects.ApplyStaminaTick(local, tier);
@@ -72,7 +73,7 @@ namespace BattleScars.Services
             _slowTickTimer -= Time.deltaTime;
             if (_slowTickTimer > 0f) return;
             _slowTickTimer = SlowTickInterval;
-            SlowTick(local, enabled, deadOrDisabled);
+            SlowTick(local, dead, disabled);
         }
 
         // Numpad 0 disables, 1 jumps to HP 1, 2-9 jump to HP 20, 30, ... 90.
@@ -116,20 +117,27 @@ namespace BattleScars.Services
             return avatar.playerHealth != null ? avatar.playerHealth.health : 0;
         }
 
-        private void SlowTick(PlayerAvatar? local, bool enabled, bool deadOrDisabled)
+        private void SlowTick(PlayerAvatar? local, bool dead, bool disabled)
         {
             SaveBackup.TryBackupOnce(local);
             if (local == null || string.IsNullOrEmpty(local.steamID)) return;
             if (!ConfigService.IsEnabled()) return;
 
-            int hp = EffectiveHealthFor(local);
-            var forced = enabled && !deadOrDisabled
+            // Treat death as HP 0 so the full broken set (broken-head included)
+            // lands on the dead Semibot regardless of what killed it. Tumble
+            // (isDisabled without death) still strips back to the saved
+            // loadout. PlayerDeathDone flips isDisabled on too, so the
+            // strip-back gate has to exclude the dead case or the dead head
+            // gets wiped clean a second after the postfix applies.
+            int hp = dead ? 0 : EffectiveHealthFor(local);
+            bool stripBack = disabled && !dead;
+            var forced = !stripBack
                 ? Cosmetics.ForcedSetForHealth(local.steamID, hp, Cosmetics.PlayerWearsHat(local))
                 : new List<int>();
 
             if (_applied.TryGetValue(local.steamID, out var was) && SameSet(was, forced))
             {
-                ConfigService.LogDiag($"tick hp={hp} dead={deadOrDisabled} scars={forced.Count} -> skip (no change)");
+                ConfigService.LogDiag($"tick hp={hp} dead={dead} disabled={disabled} scars={forced.Count} -> skip (no change)");
                 return;
             }
 
@@ -137,7 +145,7 @@ namespace BattleScars.Services
             _applied[local.steamID] = forced;
 
             ConfigService.LogDiag(
-                $"tick hp={hp} dead={deadOrDisabled} scars={forced.Count} -> {(forced.Count == 0 ? "restore" : "apply")}");
+                $"tick hp={hp} dead={dead} disabled={disabled} scars={forced.Count} -> {(forced.Count == 0 ? "restore" : "apply")}");
             ConfigService.LogDiag($"  diff: {Cosmetics.DescribeDiff(previous, forced)}");
             ConfigService.LogDiag($"  set:  {Cosmetics.Describe(forced)}");
 
@@ -147,8 +155,8 @@ namespace BattleScars.Services
 
         public void InvalidateAppliedCosmetics() => _applied.Clear();
 
-        // Leaving an active scene: pull scars and the voice override off the
-        // local Semibot so it returns to the lobby looking like itself.
+        // Leaving an active scene: pull scars off the local Semibot so it
+        // returns to the lobby looking like itself.
         private void TeardownLocal()
         {
             var local = PlayerLookup.LocalAvatar();
@@ -176,13 +184,14 @@ namespace BattleScars.Services
                 ConfigService.LogDiag("reassert skipped: not in an active scene");
                 return;
             }
-            if (local.deadSet || local.isDisabled)
+            if (local.isDisabled && !local.deadSet)
             {
-                ConfigService.LogDiag("reassert skipped: local avatar dead or disabled");
+                ConfigService.LogDiag("reassert skipped: local avatar tumbled");
                 return;
             }
 
-            var forced = Cosmetics.ForcedSetForHealth(local.steamID, EffectiveHealthFor(local), Cosmetics.PlayerWearsHat(local));
+            int hp = local.deadSet ? 0 : EffectiveHealthFor(local);
+            var forced = Cosmetics.ForcedSetForHealth(local.steamID, hp, Cosmetics.PlayerWearsHat(local));
             if (forced.Count == 0)
             {
                 ConfigService.LogDiag("reassert: nothing to re-apply at this HP");

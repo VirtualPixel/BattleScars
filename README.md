@@ -28,6 +28,8 @@ Which limbs scar, and in what order, is reseeded every level, so the same HP wea
 
 Max-HP upgrades buy a real buffer. 160 max HP means you can take 85 damage before the first scar.
 
+When you die the head rolls off wearing the broken mesh, regardless of what HP the killing hit landed at.
+
 ## What broadcasts
 
 Different effects travel different paths:
