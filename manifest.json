@@ -1,6 +1,6 @@
 {
   "name": "BattleScars",
-  "version_number": "1.2.1",
+  "version_number": "1.2.2",
   "website_url": "https://github.com/VirtualPixel/BattleScars",
   "description": "Your Semibot cracks, bandages, dents and loses limbs as HP drops, so a glance across the room reads a teammate's health. Heal up and the scars mend. Unmodded teammates see your damage too. Optional speed and stamina nerfs at low HP.",
   "dependencies": ["BepInEx-BepInExPack-5.4.2305"]

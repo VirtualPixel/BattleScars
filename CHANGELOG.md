@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.2
+
+- The little expression-preview Semibot under the screen reflects your scars too. It used to show your saved loadout no matter how beat up you were, since vanilla only sets that preview's cosmetics up once per level. Now it mirrors the in-game body as your HP changes.
+
 ## 1.2.1
 
 - The dead head you leave behind reads as broken now. The mod was wiping back to your saved loadout the instant the death sequence started, so the dead head used to show up untouched no matter how badly you were hurt.

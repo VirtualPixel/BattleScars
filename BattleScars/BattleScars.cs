@@ -41,6 +41,7 @@ namespace BattleScars
                 var avatar = PlayerLookup.LocalAvatar();
                 if (avatar == null) return;
                 Cosmetics.RestoreToLocal(avatar);
+                Cosmetics.RefreshExpressionPreview();
                 Driver.Instance?.InvalidateAppliedCosmetics();
             };
         }

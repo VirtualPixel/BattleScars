@@ -400,6 +400,20 @@ namespace BattleScars.Services
             if (head != null) SyncToMaster(head.playerCosmetics, saved);
         }
 
+        // The little expression-preview Semibot under the screen has its own
+        // PlayerCosmetics that vanilla only sets up once, via FirstSetup, so it
+        // would stay frozen at the saved loadout once that ran. Kicking
+        // SetupCosmetics with _forced=false re-runs SetupCosmeticsLogic, which
+        // the menu-avatar prefix catches to inject the current scars.
+        public static void RefreshExpressionPreview()
+        {
+            var ui = PlayerExpressionsUI.instance;
+            if (ui == null) return;
+            var visuals = ui.playerAvatarVisuals;
+            if (visuals == null || visuals.playerCosmetics == null) return;
+            visuals.playerCosmetics.SetupCosmetics(_synced: false, _forced: false);
+        }
+
         // The dead head spawns with its own PlayerCosmetics, pre-instantiated
         // by LevelGenerator and parked at the disabled position until
         // PlayerDeathHead.Trigger teleports it in. Vanilla never refreshes it

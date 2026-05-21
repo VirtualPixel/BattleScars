@@ -147,6 +147,7 @@ namespace BattleScars.Services
 
             if (forced.Count == 0) Cosmetics.RestoreToLocal(local);
             else Cosmetics.Apply(local, forced);
+            Cosmetics.RefreshExpressionPreview();
         }
 
         public void InvalidateAppliedCosmetics() => _applied.Clear();
@@ -191,6 +192,7 @@ namespace BattleScars.Services
             _applied[local.steamID] = forced;
             ConfigService.LogDiag($"reassert -> apply {Cosmetics.Describe(forced)}");
             Cosmetics.Apply(local, forced);
+            Cosmetics.RefreshExpressionPreview();
         }
 
         private static bool SameSet(List<int> a, List<int> b)
