@@ -4,16 +4,15 @@ using UnityEngine;
 
 namespace BattleScars.Services
 {
-    // DontDestroyOnLoad MonoBehaviour that holds runtime state. Spawned once
-    // from StatsManagerStartPatch. Three responsibilities:
-    //  1. Per-frame nerfs on the local player (re-apply OverrideSpeed every tick).
-    //  2. Slow tick that reapplies cosmetics when the HP-derived state changes.
-    //  3. Dev-only Numpad 0-9 hotkeys that drive PluginConfig.TestHealth.
+    // DontDestroyOnLoad MonoBehaviour that drives the per-frame nerfs and the
+    // tick that reapplies cosmetics when the HP-derived state changes. Spawned
+    // once from StatsManagerStartPatch. Numpad hotkeys drive PluginConfig.TestHealth
+    // for previewing scar thresholds without taking damage.
     public class Driver : MonoBehaviour
     {
         public static Driver? Instance { get; private set; }
 
-        private const float SlowTickInterval = 1f;
+        private const float SlowTickInterval = 0.2f;
 
         private float _slowTickTimer;
         private bool _wasActive;
@@ -123,17 +122,14 @@ namespace BattleScars.Services
             if (local == null || string.IsNullOrEmpty(local.steamID)) return;
             if (!ConfigService.IsEnabled()) return;
 
-            // Treat death as HP 0 so the full broken set (broken-head included)
-            // lands on the dead Semibot regardless of what killed it. Tumble
-            // (isDisabled without death) still strips back to the saved
-            // loadout. PlayerDeathDone flips isDisabled on too, so the
-            // strip-back gate has to exclude the dead case or the dead head
-            // gets wiped clean a second after the postfix applies.
+            // Death lands the full broken set at hp=0 regardless of what hit
+            // landed it. isDisabled is intentionally ignored here: it's set
+            // by PlayerDeathDone (already covered by the dead branch) and by
+            // GameDirector.gameStateEnd during the level-end transition,
+            // where stripping scars wiped them across every peer before the
+            // next scene's tick could land the right state.
             int hp = dead ? 0 : EffectiveHealthFor(local);
-            bool stripBack = disabled && !dead;
-            var forced = !stripBack
-                ? Cosmetics.ForcedSetForHealth(local.steamID, hp, Cosmetics.PlayerWearsHat(local))
-                : new List<int>();
+            var forced = Cosmetics.ForcedSetForHealth(local.steamID, hp, Cosmetics.PlayerWearsHat(local));
 
             if (_applied.TryGetValue(local.steamID, out var was) && SameSet(was, forced))
             {
@@ -182,11 +178,6 @@ namespace BattleScars.Services
             if (!ConfigService.InActiveScene())
             {
                 ConfigService.LogDiag("reassert skipped: not in an active scene");
-                return;
-            }
-            if (local.isDisabled && !local.deadSet)
-            {
-                ConfigService.LogDiag("reassert skipped: local avatar tumbled");
                 return;
             }
 

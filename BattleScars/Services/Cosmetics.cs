@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using BattleScars.Configuration;
+using Photon.Pun;
+using Photon.Realtime;
 
 namespace BattleScars.Services
 {
@@ -17,9 +19,9 @@ namespace BattleScars.Services
         Broken = 3,
     }
 
-    // Scar cosmetics, grouped into limb regions. REPO ships three stacking
+    // Scar cosmetics grouped into limb regions. REPO ships three stacking
     // layers per limb: a bandage accessory, a crack/damaged overlay (one slot,
-    // the two are mutually exclusive), and a broken mesh. Every scar asset folds
+    // the two mutually exclusive), and a broken mesh. Every scar asset folds
     // onto its limb region by CosmeticType.
     //
     // A scarred limb is pinned for the level and accumulates layers as HP drops:
@@ -28,10 +30,10 @@ namespace BattleScars.Services
     // scar, and in what order, is seeded per level (RerollRoundSeed), so each
     // level wears its damage differently.
     //
-    // SetupCosmeticsRPC only fires from the cosmetic's owner, so applying scars
-    // on the local player is enough for every peer in the lobby to see them
-    // through vanilla networking. The RPC is buffered, so late joiners pick the
-    // current state up automatically.
+    // Scars broadcast through vanilla SetupCosmeticsRPC so every peer renders
+    // them, even on unmodded clients. The buffered RPC also picks late joiners
+    // up. The master client doesn't catch the AllBuffered fan-out cleanly, so
+    // SyncToMaster duplicates the payload via a direct RPC.
     public static class Cosmetics
     {
         // One scarable limb. Each layer is an asset index, or -1 when REPO ships
@@ -372,12 +374,13 @@ namespace BattleScars.Services
             ConfigService.LogDiag(
                 $"apply steam={avatar.steamID} forced={{ {Describe(forced)} }} (combined {combined.Count} total)");
 
-            using (CosmeticReassertGuard.Enter())
-            {
-                avatar.playerCosmetics.SetupCosmetics(_synced: SemiFunc.IsMultiplayer(), _forced: true, _cosmetics: combined);
-                avatar.playerCosmetics.SetupColors(_synced: SemiFunc.IsMultiplayer());
-                ApplyToDeathHead(avatar, combined);
-            }
+            avatar.playerCosmetics.SetupCosmetics(_synced: SemiFunc.IsMultiplayer(), _forced: true, _cosmetics: combined);
+            avatar.playerCosmetics.SetupColors(_synced: SemiFunc.IsMultiplayer());
+            ApplyToDeathHead(avatar, combined);
+
+            SyncToMaster(avatar.playerCosmetics, combined);
+            var head = avatar.playerDeathHead;
+            if (head != null) SyncToMaster(head.playerCosmetics, combined);
         }
 
         public static void RestoreToLocal(PlayerAvatar avatar)
@@ -387,18 +390,20 @@ namespace BattleScars.Services
 
             ConfigService.LogDiag($"restore steam={avatar.steamID} (back to the saved loadout)");
 
-            using (CosmeticReassertGuard.Enter())
-            {
-                avatar.playerCosmetics.SetupCosmetics(_synced: SemiFunc.IsMultiplayer(), _forced: true, _cosmetics: null);
-                avatar.playerCosmetics.SetupColors(_synced: SemiFunc.IsMultiplayer());
-                ApplyToDeathHead(avatar, null);
-            }
+            avatar.playerCosmetics.SetupCosmetics(_synced: SemiFunc.IsMultiplayer(), _forced: true, _cosmetics: null);
+            avatar.playerCosmetics.SetupColors(_synced: SemiFunc.IsMultiplayer());
+            ApplyToDeathHead(avatar, null);
+
+            var saved = MetaManager.instance?.cosmeticEquipped;
+            SyncToMaster(avatar.playerCosmetics, saved);
+            var head = avatar.playerDeathHead;
+            if (head != null) SyncToMaster(head.playerCosmetics, saved);
         }
 
-        // The detached head that spawns on death has its own PlayerCosmetics,
-        // pre-instantiated by LevelGenerator and parked at the disabled position
-        // until PlayerDeathHead.Trigger teleports it in. Vanilla never refreshes
-        // it after that initial load, so without this mirror the dead head wears
+        // The dead head spawns with its own PlayerCosmetics, pre-instantiated
+        // by LevelGenerator and parked at the disabled position until
+        // PlayerDeathHead.Trigger teleports it in. Vanilla never refreshes it
+        // after that initial load, so without this mirror the dead head wears
         // the saved loadout no matter what scars are on the body.
         private static void ApplyToDeathHead(PlayerAvatar avatar, List<int>? combined)
         {
@@ -408,28 +413,22 @@ namespace BattleScars.Services
             headCosmetics.SetupCosmetics(_synced: SemiFunc.IsMultiplayer(), _forced: true, _cosmetics: combined);
             headCosmetics.SetupColors(_synced: SemiFunc.IsMultiplayer());
         }
-    }
 
-    // Thread-static refcount used by SetupCosmeticsReassertPatch to tell its
-    // own calls apart from vanilla refreshes. Reentrant: nested Enter/Dispose
-    // pairs only release on the outermost Dispose.
-    internal static class CosmeticReassertGuard
-    {
-        [System.ThreadStatic] private static int _depth;
-        public static bool IsInside => _depth > 0;
-
-        public static Releaser Enter()
+        // Photon Cloud's buffered fan-out delivers cosmetic RPCs from a
+        // non-master sender to the master a step late. Sending the same
+        // payload directly via Receivers=MasterClient hits a different
+        // routing path and lands the live state. No-op when we are the
+        // master ourselves; the local apply already covered it.
+        private static void SyncToMaster(PlayerCosmetics? cosmetics, IList<int>? equipped)
         {
-            _depth++;
-            return default;
-        }
-
-        public struct Releaser : System.IDisposable
-        {
-            public void Dispose()
-            {
-                if (_depth > 0) _depth--;
-            }
+            if (!SemiFunc.IsMultiplayer() || cosmetics == null || cosmetics.photonView == null) return;
+            var master = PhotonNetwork.MasterClient;
+            if (master == null || master.IsLocal) return;
+            int[] arr = equipped != null ? equipped.ToArray() : Array.Empty<int>();
+            cosmetics.photonView.RPC("SetupCosmeticsRPC", master, arr, true);
+            var colors = cosmetics.colorsEquipped;
+            if (colors != null)
+                cosmetics.photonView.RPC("SetupColorsRPC", master, colors);
         }
     }
 }

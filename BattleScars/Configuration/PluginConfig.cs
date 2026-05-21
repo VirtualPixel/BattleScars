@@ -74,7 +74,9 @@ namespace BattleScars.Configuration
 
         public static ConfigEntry<RunMode> Mode = null!;
         public static ConfigEntry<ScarIntensity> Intensity = null!;
+        public static ConfigEntry<bool> Vignette = null!;
         public static ConfigEntry<float> VignetteIntensity = null!;
+        public static ConfigEntry<bool> CameraGlitches = null!;
         public static ConfigEntry<int> TestHealth = null!;
         public static ConfigEntry<bool> DebugLogging = null!;
 
@@ -85,15 +87,23 @@ namespace BattleScars.Configuration
                 "Off: mod inactive. VisualOnly: scars and the screen vignette, no nerfs. Full: adds the move-speed and stamina nerfs on top."
             );
             Intensity = config.Bind(
-                "General", "ScarIntensity", ScarIntensity.Normal,
-                "How early and how hard scars build up. Light starts late and worsens slowly, Heavy starts after the first few hits."
+                "General", "ScarIntensity", ScarIntensity.Heavy,
+                "How early and how hard scars build up. Light holds them off until you're badly hurt, Heavy starts them after the first few hits."
             );
 
+            Vignette = config.Bind(
+                "Effects", "Vignette", true,
+                "Red edge vignette that ramps up at low HP. Off hides it entirely; on uses VignetteIntensity for strength."
+            );
             VignetteIntensity = config.Bind(
                 "Effects", "VignetteIntensity", 0.25f,
                 new ConfigDescription(
-                    "How strong the red damage vignette gets at its worst, near death. It ramps up from there as HP drops. 0 hides it entirely, 1 is intense.",
+                    "How strong the red vignette gets at its worst, near death. Ramps up as HP drops. 0 fades it to nothing, 1 is intense.",
                     new AcceptableValueRange<float>(0f, 1f))
+            );
+            CameraGlitches = config.Bind(
+                "Effects", "CameraGlitches", true,
+                "Screen flashes and camera faults that fire at very low HP. Off keeps the camera steady regardless of damage. REPO's photosensitivity accessibility setting also forces this off."
             );
 
             TestHealth = config.Bind(

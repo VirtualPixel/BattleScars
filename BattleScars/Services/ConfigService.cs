@@ -8,7 +8,11 @@ namespace BattleScars.Services
         public static bool IsEnabled() => PluginConfig.Mode.Value != RunMode.Off;
         public static bool IsVisualOnly() => PluginConfig.Mode.Value == RunMode.VisualOnly;
 
-        public static bool ScreenOverlayEnabled() => IsEnabled() && PluginConfig.VignetteIntensity.Value > 0f;
+        public static bool VignetteEnabled() =>
+            IsEnabled() && PluginConfig.Vignette.Value && PluginConfig.VignetteIntensity.Value > 0f;
+
+        public static bool CameraGlitchesEnabled() =>
+            IsEnabled() && PluginConfig.CameraGlitches.Value;
 
         // The move-speed and stamina nerfs ride together, on only in Full mode.
         public static bool NerfsEnabled() => IsEnabled() && !IsVisualOnly();

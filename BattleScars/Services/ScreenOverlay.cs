@@ -60,7 +60,7 @@ namespace BattleScars.Services
 
         private void UpdateGlitch()
         {
-            if (!ConfigService.ScreenOverlayEnabled() || !ConfigService.InActiveScene()) return;
+            if (!ConfigService.CameraGlitchesEnabled() || !ConfigService.InActiveScene()) return;
             var avatar = PlayerLookup.LocalAvatar();
             if (avatar == null) return;
             if (avatar.deadSet || avatar.isDisabled) return;
@@ -117,7 +117,7 @@ namespace BattleScars.Services
         // tier line is crossed. Update eases _overlayT toward this.
         private static float OverlayTarget()
         {
-            if (!ConfigService.ScreenOverlayEnabled() || !ConfigService.InActiveScene()) return 0f;
+            if (!ConfigService.VignetteEnabled() || !ConfigService.InActiveScene()) return 0f;
             var avatar = PlayerLookup.LocalAvatar();
             if (avatar == null) return 0f;
             return Mathf.InverseLerp(PluginConfig.Curve.FirstScarHP, 1f,
@@ -126,7 +126,7 @@ namespace BattleScars.Services
 
         private void OnGUI()
         {
-            if (!ConfigService.ScreenOverlayEnabled() || _vignette == null) return;
+            if (!ConfigService.VignetteEnabled() || _vignette == null) return;
             if (_overlayT < OverlayEpsilon) return;
 
             // Heartbeat that quickens as the damage deepens. Photosensitivity

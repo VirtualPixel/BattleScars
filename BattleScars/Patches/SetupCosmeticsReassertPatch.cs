@@ -21,7 +21,6 @@ namespace BattleScars.Patches
         [HarmonyPostfix]
         public static void Postfix(PlayerCosmetics __instance, bool _forced)
         {
-            if (CosmeticReassertGuard.IsInside) return;
             if (_forced) return;
             if (__instance == null || __instance.playerAvatarVisuals == null) return;
             if (__instance.playerAvatarVisuals.isMenuAvatar) return;

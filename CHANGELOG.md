@@ -2,8 +2,13 @@
 
 ## 1.2.1
 
-- The rolling head you leave behind when you die reads as broken now. The mod was wiping back to your saved loadout the instant the death sequence started, so the dead head used to show up untouched no matter how badly you were hurt.
-- Scars push onto the detached dead head as well as the live body. Vanilla only sets the dead head's cosmetics up once per level so it was sitting at whatever your saved loadout looked like; the mod now keeps both in sync.
+- The dead head you leave behind reads as broken now. The mod was wiping back to your saved loadout the instant the death sequence started, so the dead head used to show up untouched no matter how badly you were hurt.
+- Scars push onto the dead head as well as the live body. Vanilla only sets the dead head's cosmetics up once per level so it was sitting at whatever your saved loadout looked like; the mod now keeps both in sync.
+- Fixed scars stripping mid-run when the level handed you off to the truck or shop. The mod was treating any `isDisabled` flip as a tumble and wiping back to a clean Semibot, but the level-end transition also flips that flag, so the truck heal that followed left you with no scars on the wire.
+- Fixed the host rendering one scar-update behind everyone else. Photon Cloud's buffered fan-out delivers cosmetic RPCs from a non-master sender to the master a step late; the mod now duplicates the apply with a direct-to-master RPC so the host stays in sync with what the rest of the lobby is seeing.
+- Scars react about five times faster. Slow tick dropped from 1s to 0.2s, so the cosmetics catch the HP you're actually at instead of the one you were at last second.
+- Default `ScarIntensity` is Heavy now. It was Normal; Heavy feels closer to what the mod is for.
+- `Vignette` and `CameraGlitches` toggles. The vignette and the camera-fault flashes used to share the VignetteIntensity slider; now you can turn either off independently while keeping the other.
 
 ## 1.2.0
 

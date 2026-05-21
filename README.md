@@ -22,7 +22,7 @@ The first scar shows up at 75 HP, and another body part joins it every 8 HP you 
 
 Each scarred part worsens by stacking layers rather than swapping one look for the next. A crack shows up first, then a bandage joins it, then the crack deepens into dented plating, and finally the limb breaks outright into a broken mesh. The parts don't worsen in lockstep. Whatever got scarred first runs a stage or two ahead of the newest scar, so most of the time the Semibot wears a mix. A bandaged arm next to a cracked leg next to a broken-mesh shoulder.
 
-Rough landmarks: the first broken-mesh limb turns up around 30 HP. The broken head holds out the longest, until you're under 10. Everything between those overlaps. Those numbers are the Normal intensity; `ScarIntensity` in the config shifts the whole curve earlier or later.
+Rough landmarks at the default Heavy intensity: the first scar shows around 95 HP, the first broken-mesh limb around 40 HP. Broken head holds out the longest. `ScarIntensity` shifts the whole curve; Light pushes everything later, Normal is the calmer middle ground.
 
 Which limbs scar, and in what order, is reseeded every level, so the same HP wears differently from one level to the next. Within a level the layout holds steady and healing walks it back in reverse; it only reshuffles once you're patched back up to full health.
 
@@ -57,21 +57,25 @@ Lives at `BepInEx/config/Vippy.BattleScars.cfg`. REPOConfig picks it up as an in
 ```
 [General]
 Mode = VisualOnly
-ScarIntensity = Normal
+ScarIntensity = Heavy
 
 [Effects]
+Vignette = true
 VignetteIntensity = 0.25
+CameraGlitches = true
 
 [Testing]
 TestHealth = -1
 DebugLogging = false
 ```
 
-That's all of it. Five settings. Most players never need to touch anything except `Mode`.
+Most players never need to touch anything except `Mode`.
 
-`ScarIntensity` shifts the whole curve. Light holds scars off until you're badly hurt, Heavy starts them after the first couple of hits, Normal is the tuned default. `VignetteIntensity` is how strong the red low-health vignette gets at its worst, near death, 0 to 1. It ramps up as your HP drops and eases back off as you heal.
+`ScarIntensity` shifts the whole curve. Heavy (default) piles scars on after the first few hits, Normal is the calmer middle ground, Light holds them off until you're badly hurt.
 
-`TestHealth` is for previewing thresholds without taking damage. -1 disables. 0-100 forces that HP value through the tier pipeline, no real damage taken. Numpad 0-9 in-game drives the same field: Numpad 0 disables, Numpad 1 jumps to HP 1, Numpad 2-9 jumps to HP 20, 30, ... 90.
+`Vignette` toggles the red edge overlay at low HP. `VignetteIntensity` (0 to 1) is how strong it gets at its worst. `CameraGlitches` toggles the screen-fault flashes that fire at very low HP; off keeps the camera steady. REPO's photosensitivity accessibility setting also forces the camera glitches off and holds the vignette to a steady glow.
+
+`TestHealth` previews thresholds without taking damage. -1 disables. 0-100 forces that HP value through the tier pipeline, no real damage taken. Numpad 0-9 in-game drives the same field: Numpad 0 disables, 1 jumps to HP 1, 2-9 to HP 20, 30, ... 90.
 
 `DebugLogging` dumps every scar apply and restore to the BepInEx console. Off by default; turn it on if you're filing a bug report about scars not showing up right.
 
