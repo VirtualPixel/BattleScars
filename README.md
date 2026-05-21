@@ -18,17 +18,17 @@ If only the host installs, only the host gets scars. There's no "host enforces o
 
 ## How it works
 
-The first scar shows up at 75 HP, and another body part joins it every 8 HP you lose after that.
+The first scar shows up at 95 HP, and another body part joins it every 6 HP you lose after that. Those numbers are the default Heavy intensity; `ScarIntensity` shifts the whole curve later (Normal, Light) if you want scars to hold off longer.
 
 Each scarred part worsens by stacking layers rather than swapping one look for the next. A crack shows up first, then a bandage joins it, then the crack deepens into dented plating, and finally the limb breaks outright into a broken mesh. The parts don't worsen in lockstep. Whatever got scarred first runs a stage or two ahead of the newest scar, so most of the time the Semibot wears a mix. A bandaged arm next to a cracked leg next to a broken-mesh shoulder.
 
-Rough landmarks at the default Heavy intensity: the first scar shows around 95 HP, the first broken-mesh limb around 40 HP. Broken head holds out the longest. `ScarIntensity` shifts the whole curve; Light pushes everything later, Normal is the calmer middle ground.
+Rough landmarks at Heavy: the first broken-mesh limb shows around 40 HP. The broken head holds out the longest, until you're under 15. Everything between those overlaps.
 
 Which limbs scar, and in what order, is reseeded every level, so the same HP wears differently from one level to the next. Within a level the layout holds steady and healing walks it back in reverse; it only reshuffles once you're patched back up to full health.
 
-Max-HP upgrades buy a real buffer. 160 max HP means you can take 85 damage before the first scar.
+Max-HP upgrades buy a real buffer. 160 max HP means you can take 65 damage at Heavy before the first scar shows.
 
-When you die the head rolls off wearing the broken mesh, regardless of what HP the killing hit landed at.
+When you die your dead head wears the broken mesh, regardless of what HP the killing hit landed at.
 
 ## What broadcasts
 
