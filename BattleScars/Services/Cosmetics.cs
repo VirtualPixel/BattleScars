@@ -404,7 +404,10 @@ namespace BattleScars.Services
         // PlayerCosmetics that vanilla only sets up once, via FirstSetup, so it
         // would stay frozen at the saved loadout once that ran. Kicking
         // SetupCosmetics with _forced=false re-runs SetupCosmeticsLogic, which
-        // the menu-avatar prefix catches to inject the current scars.
+        // the menu-avatar prefix catches to inject the current scars. The
+        // colors need a kick too: each newly-instantiated scar cosmetic has a
+        // fresh material at its prefab default (white-ish), and only a
+        // SetupColors pass walks playerMaterials and tints them.
         public static void RefreshExpressionPreview()
         {
             var ui = PlayerExpressionsUI.instance;
@@ -412,6 +415,7 @@ namespace BattleScars.Services
             var visuals = ui.playerAvatarVisuals;
             if (visuals == null || visuals.playerCosmetics == null) return;
             visuals.playerCosmetics.SetupCosmetics(_synced: false, _forced: false);
+            visuals.playerCosmetics.SetupColors(_synced: false);
         }
 
         // The dead head spawns with its own PlayerCosmetics, pre-instantiated
