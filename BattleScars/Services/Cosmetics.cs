@@ -46,6 +46,10 @@ namespace BattleScars.Services
             public int CrackOverlay = -1;
             public int DamagedOverlay = -1;
             public int BrokenMesh = -1;
+            // Optional alternate broken meshes for this region (e.g. the HeadTop
+            // "Broken Cords" variant). Stable per-level pick rolls each one in
+            // turn at RareBrokenMeshChance before falling back to BrokenMesh.
+            public readonly List<int> RareBrokenMeshes = new();
             public bool IsHead; // broken mesh waits for the BrokenHeadHP threshold
 
             // The HeadTop bandage is a Hat-slot cosmetic; forcing it evicts the
@@ -57,6 +61,14 @@ namespace BattleScars.Services
         // even on a fully scarred Semibot. Overlays and broken meshes are uncapped;
         // they carry the damage signal everywhere.
         private const int MaxBandagedLimbs = 3;
+
+        // Substrings (case-insensitive) that mark a broken mesh as a rare
+        // variant rather than the region's primary one. REPO ships
+        // "Head Top Mesh - Broken Cords" alongside "Head Top Mesh - Broken";
+        // tagging "cords" routes Cords into the rare pool so it shows up
+        // occasionally instead of always.
+        private static readonly string[] RareBrokenTokens = { "cords" };
+        private const double RareBrokenMeshChance = 0.25;
 
         private static List<Region>? _regions;
         private static bool _discoveryRan;
@@ -92,7 +104,8 @@ namespace BattleScars.Services
             BattleScars.Log.LogInfo($"[Cosmetics] scar regions={_regions.Count}");
             foreach (var r in _regions)
                 ConfigService.LogDiag($"[Cosmetics]   {r.Key}: bandage={r.Bandage >= 0} " +
-                    $"crack={r.CrackOverlay >= 0} damaged={r.DamagedOverlay >= 0} broken={r.BrokenMesh >= 0}");
+                    $"crack={r.CrackOverlay >= 0} damaged={r.DamagedOverlay >= 0} " +
+                    $"broken={r.BrokenMesh >= 0} rareBroken={r.RareBrokenMeshes.Count}");
             if (_regions.Count == 0)
                 BattleScars.Log.LogWarning("[Cosmetics] no scar cosmetics matched, cosmetic effects disabled");
         }
@@ -126,7 +139,12 @@ namespace BattleScars.Services
                     if (region.DamagedOverlay < 0) region.DamagedOverlay = idx;
                     break;
                 case ScarSeverity.Broken:
-                    if (region.BrokenMesh < 0)
+                    if (IsRareBroken(asset))
+                    {
+                        region.RareBrokenMeshes.Add(idx);
+                        if (IsHeadMesh(asset.type)) region.IsHead = true;
+                    }
+                    else if (region.BrokenMesh < 0)
                     {
                         region.BrokenMesh = idx;
                         region.IsHead = IsHeadMesh(asset.type);
@@ -164,6 +182,31 @@ namespace BattleScars.Services
             || type == SemiFunc.CosmeticType.HeadBottomMesh
             || type == SemiFunc.CosmeticType.EyeLidRightMesh
             || type == SemiFunc.CosmeticType.EyeLidLeftMesh;
+
+        private static bool IsRareBroken(CosmeticAsset asset)
+        {
+            string a = (asset.name ?? string.Empty).ToLowerInvariant();
+            string b = (asset.assetName ?? string.Empty).ToLowerInvariant();
+            foreach (var t in RareBrokenTokens)
+                if (a.Contains(t) || b.Contains(t)) return true;
+            return false;
+        }
+
+        // Stable per-level pick for the region's broken mesh. The rare pool is
+        // rolled in order; first hit wins, otherwise the primary mesh stays.
+        // The seed is folded with the region key and steamID so the choice
+        // holds for one damage episode (until the full-health reroll) and
+        // varies across runs and across peers.
+        private static int PickBrokenMesh(Region region, string steamID)
+        {
+            if (region.RareBrokenMeshes.Count == 0) return region.BrokenMesh;
+            int baseHash = string.IsNullOrEmpty(steamID) ? 1 : steamID.GetHashCode();
+            int seed = unchecked(baseHash * 1009 + _roundSeed * 31 + region.Key.GetHashCode());
+            var rng = new Random(seed);
+            foreach (var rare in region.RareBrokenMeshes)
+                if (rng.NextDouble() < RareBrokenMeshChance) return rare;
+            return region.BrokenMesh;
+        }
 
         private static List<int> BuildPool(IList<CosmeticAsset> assets, string allowList)
         {
@@ -239,10 +282,13 @@ namespace BattleScars.Services
                 }
 
                 // Mesh layer: a fully broken limb. Head meshes wait for the
-                // separate broken-head HP threshold.
-                if (severity >= ScarSeverity.Broken && region.BrokenMesh >= 0
+                // separate broken-head HP threshold. PickBrokenMesh rolls the
+                // region's rare variants (e.g. HeadTop Cords) and falls back to
+                // the primary mesh.
+                int brokenMesh = PickBrokenMesh(region, steamID);
+                if (severity >= ScarSeverity.Broken && brokenMesh >= 0
                     && (!region.IsHead || brokenHead))
-                    result.Add(region.BrokenMesh);
+                    result.Add(brokenMesh);
             }
             return result;
         }

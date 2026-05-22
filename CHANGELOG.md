@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.3
+
+- Occasionally the broken head shows the dangling-cords look instead of the usual cracked-open one. About one head in four, rolled per damage episode, so a level either has it or it doesn't.
+
 ## 1.2.2
 
 - The little expression-preview Semibot under the screen reflects your scars too. It used to show your saved loadout no matter how beat up you were, since vanilla only sets that preview's cosmetics up once per level. Now it mirrors the in-game body as your HP changes.
