@@ -66,48 +66,44 @@ namespace BattleScars.Services
             if (avatar.deadSet || avatar.isDisabled) return;
 
             var tier = ConfigService.TierForHealth(Driver.EffectiveHealthFor(avatar));
-            // Camera faults hold off until Battered. Glitching from the first
-            // scratch felt like overkill; scars and the edge vignette still ramp
-            // from the first scar, only the glitch waits for real damage.
-            if (tier < Tier.Battered) return;
+            // Hold off until Wrecked. Battered already shows in the scars and
+            // the vignette; firing camera faults that early stacked on top of
+            // vanilla hit reactions and read as constant interruption.
+            if (tier < Tier.Wrecked) return;
 
             // The screen glitches flash; photosensitivity mode drops them.
             if (ConfigService.PhotosensitivityOn()) return;
 
             _glitchTimer -= Time.deltaTime;
             if (_glitchTimer > 0f) return;
-            _glitchTimer = GlitchInterval(avatar) * Random.Range(0.7f, 1.3f);
-            FireGlitch(tier);
+            _glitchTimer = GlitchInterval(avatar) * Random.Range(0.85f, 1.15f);
+            FireGlitch();
         }
 
-        private static void FireGlitch(Tier tier)
+        private static void FireGlitch()
         {
             var glitch = CameraGlitch.Instance;
             if (glitch == null) return;
 
-            // PlayLong/Short/Tiny are the neutral variants. Avoid the variants
-            // that flash red or play hurt sounds so the effect reads as
-            // malfunction rather than a fresh hit.
+            // PlayLong/Short/Tiny are the neutral variants. Avoid the Hurt
+            // variants so the effect reads as malfunction, not a fresh hit.
+            // Tiny is the default since Long carries a 0.3s magnitude-2 shake
+            // that stops being "ambient malfunction" and starts being a punch.
             float r = Random.value;
-            if (tier >= Tier.Wrecked)
-            {
-                if (r < 0.65f) glitch.PlayLong();
-                else glitch.PlayShort();
-            }
-            else // Battered, the gentlest glitch tier
-            {
-                if (r < 0.45f) glitch.PlayLong();
-                else if (r < 0.85f) glitch.PlayShort();
-                else glitch.PlayTiny();
-            }
+            if (r < 0.15f) glitch.PlayLong();
+            else if (r < 0.45f) glitch.PlayShort();
+            else glitch.PlayTiny();
         }
 
-        // 1 HP -> ~1s, 10 HP -> ~2s, 25 HP -> ~4s, 43 HP -> ~7s.
+        // Auto-scales off the active scar curve so all three intensities feel
+        // the same: sparse at Wrecked entry, quickening toward 1 HP, never
+        // faster than once every few seconds.
         private static float GlitchInterval(PlayerAvatar avatar)
         {
-            if (avatar.playerHealth == null) return 6f;
+            if (avatar.playerHealth == null) return 12f;
             int hp = Mathf.Max(1, avatar.playerHealth.health);
-            return Mathf.Clamp(0.5f + hp * 0.15f, 1f, 12f);
+            float t = Mathf.InverseLerp(1f, PluginConfig.Curve.FirstScarHP, hp);
+            return Mathf.Lerp(8f, 18f, t);
         }
 
         // Where the vignette intensity wants to be right now, 0..1: a

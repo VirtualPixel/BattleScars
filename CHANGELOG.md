@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.4
+
+- Camera glitches default to off. The scars and the vignette are the headline; the screen-fault flashes are flavor on top, opt-in for the people who want them.
+- Retuned the glitches for the people who do turn them on. They used to start at the Battered tier and fire roughly once a second at 1 HP, which stacked on vanilla hit reactions and read as constant interruption. Now they wait for the Wrecked tier, scale with the active scar curve, lean on the lightest variant, and never come faster than once every several seconds.
+
 ## 1.2.3
 
 - Occasionally the broken head shows the dangling-cords look instead of the usual cracked-open one. About one head in four, rolled per damage episode, so a level either has it or it doesn't.

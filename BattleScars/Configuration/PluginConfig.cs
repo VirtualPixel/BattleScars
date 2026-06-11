@@ -102,8 +102,8 @@ namespace BattleScars.Configuration
                     new AcceptableValueRange<float>(0f, 1f))
             );
             CameraGlitches = config.Bind(
-                "Effects", "CameraGlitches", true,
-                "Screen flashes and camera faults that fire at very low HP. Off keeps the camera steady regardless of damage. REPO's photosensitivity accessibility setting also forces this off."
+                "Effects", "CameraGlitches", false,
+                "Screen flashes and camera faults that fire at very low HP. Off (default) keeps the camera steady regardless of damage. REPO's photosensitivity accessibility setting also forces this off."
             );
 
             TestHealth = config.Bind(

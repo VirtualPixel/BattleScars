@@ -62,7 +62,7 @@ ScarIntensity = Heavy
 [Effects]
 Vignette = true
 VignetteIntensity = 0.25
-CameraGlitches = true
+CameraGlitches = false
 
 [Testing]
 TestHealth = -1
@@ -73,7 +73,7 @@ Most players never need to touch anything except `Mode`.
 
 `ScarIntensity` shifts the whole curve. Heavy (default) piles scars on after the first few hits, Normal is the calmer middle ground, Light holds them off until you're badly hurt.
 
-`Vignette` toggles the red edge overlay at low HP. `VignetteIntensity` (0 to 1) is how strong it gets at its worst. `CameraGlitches` toggles the screen-fault flashes that fire at very low HP; off keeps the camera steady. REPO's photosensitivity accessibility setting also forces the camera glitches off and holds the vignette to a steady glow.
+`Vignette` toggles the red edge overlay at low HP. `VignetteIntensity` (0 to 1) is how strong it gets at its worst. `CameraGlitches` is an opt-in flavor extra, off by default: turn it on and the camera will fault and flicker occasionally once you're near death. REPO's photosensitivity accessibility setting also forces the camera glitches off and holds the vignette to a steady glow.
 
 `TestHealth` previews thresholds without taking damage. -1 disables. 0-100 forces that HP value through the tier pipeline, no real damage taken. Numpad 0-9 in-game drives the same field: Numpad 0 disables, 1 jumps to HP 1, 2-9 to HP 20, 30, ... 90.
 
