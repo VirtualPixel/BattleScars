@@ -9,3 +9,5 @@ obj/
 *.afphoto
 *.afdesign
 BuildZip/
+graphify-out/
+.git-broken-bak/
