@@ -66,6 +66,7 @@ CameraGlitches = false
 
 [Testing]
 TestHealth = -1
+TestHotkeys = false
 DebugLogging = false
 ```
 
@@ -75,7 +76,7 @@ Most players never need to touch anything except `Mode`.
 
 `Vignette` toggles the red edge overlay at low HP. `VignetteIntensity` (0 to 1) is how strong it gets at its worst. `CameraGlitches` is an opt-in flavor extra, off by default: turn it on and the camera will fault and flicker occasionally once you're near death. REPO's photosensitivity accessibility setting also forces the camera glitches off and holds the vignette to a steady glow.
 
-`TestHealth` previews thresholds without taking damage. -1 disables. 0-100 forces that HP value through the tier pipeline, no real damage taken. Numpad 0-9 in-game drives the same field: Numpad 0 disables, 1 jumps to HP 1, 2-9 to HP 20, 30, ... 90.
+`TestHealth` previews thresholds without taking damage. -1 disables. 0-100 forces that HP value through the tier pipeline, no real damage taken. Teammates see the preview scars as if they were real, and the value sticks in the config file until you set it back to -1. `TestHotkeys` puts Numpad 0-9 on the same field: Numpad 0 disables, 1 jumps to HP 1, 2-9 to HP 20, 30, ... 90. Off by default so a stray numpad press mid-run can't pin fake scars on you.
 
 `DebugLogging` dumps every scar apply and restore to the BepInEx console. Off by default; turn it on if you're filing a bug report about scars not showing up right.
 
@@ -90,8 +91,16 @@ First time the mod loads each session it copies `MetaSave.es3` to `BepInEx/confi
 - MoreHead and other cosmetic mods add to the pool the discovery pass can find. Defaults match the vanilla Bandages / Cracks / Damaged / Broken sets.
 - Respects REPO's photosensitivity setting. With it on, the screen vignette holds steady instead of pulsing and the glitch flashes are dropped.
 
-Harmony targets: `PlayerCosmetics.SetupCosmetics`, `PlayerCosmetics.SetupCosmeticsLogic`, `StatsManager.Start`. Should coexist with any mod that doesn't replace those entirely.
+Harmony targets: `PlayerCosmetics.SetupCosmetics`, `PlayerCosmetics.SetupCosmeticsLogic`, `PlayerAvatar.PlayerDeathRPC`, `StatsManager.Start`. Should coexist with any mod that doesn't replace those entirely.
 
-## Issues
+## Contact
 
-[GitHub Issues](https://github.com/VirtualPixel/BattleScars/issues) for bugs. Other mods at [Vippy on Thunderstore](https://thunderstore.io/c/repo/p/Vippy/).
+| Purpose | Where |
+|---|---|
+| Bug reports and suggestions | [GitHub Issues](https://github.com/VirtualPixel/BattleScars/issues) |
+| Questions, test builds, or just hanging out | [Vippy's Discord](https://discord.gg/kKqhck2NrP) |
+| R.E.P.O. modding in general | [R.E.P.O. Modding Server](https://discord.gg/9fDzZ9sk95) |
+
+Everything I make stays free. If one of these mods made your runs better and you feel like saying thanks, there is a [Ko-fi](https://ko-fi.com/vippydev).
+
+Other mods at [Vippy on Thunderstore](https://thunderstore.io/c/repo/p/Vippy/).
