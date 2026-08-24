@@ -16,8 +16,11 @@ namespace BattleScars.Patches
     // singleton instance and the expression avatar carries an expressionAvatar
     // flag. The rest have neither, so the gate is the singleton OR the flag.
     //
-    // The prefix augments the input array, never mutating cosmeticEquippedRaw
-    // or MetaManager state, so the saved loadout stays untouched.
+    // The prefix only augments the input array. The preview's own
+    // cosmeticEquippedRaw picks the scars up (vanilla assigns it from the array
+    // on the _forced=false path) but nothing copies that back into
+    // MetaManager.cosmeticEquipped, which is the only list that gets saved, so
+    // the player's loadout stays untouched.
     [HarmonyPatch(typeof(PlayerCosmetics), "SetupCosmeticsLogic")]
     internal static class MenuAvatarCosmeticsPatch
     {

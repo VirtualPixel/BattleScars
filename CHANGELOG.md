@@ -5,6 +5,9 @@
 - Numpad test hotkeys sit behind a new `TestHotkeys` toggle, off by default. A stray numpad press mid-run used to pin `TestHealth`, broadcast the fake scars to the lobby, and stick in the config file across restarts, with Numpad 0 as the only way back.
 - Debug trace strings are only built while `DebugLogging` is on. The slow tick was formatting its skip line five times a second for nobody, and every apply was walking the scar set to describe it whether or not anyone was listening.
 - README lists `PlayerAvatar.PlayerDeathRPC` among the Harmony targets; it went in with 1.2.1 and the list never caught up.
+- Flipping `Mode` from the main menu, before any level had loaded, threw. The local-avatar lookup walked a player list that doesn't exist until the first gameplay scene comes up.
+- README was telling two stories one sentence apart about when the scar layout reshuffles. It holds for a whole damage episode, shop and truck trips between levels included, and only reseeds once you're patched back up to full health.
+- README spells out that `ScarIntensity` moves the `Full` mode nerfs and the camera glitches with it. Both key off how scarred you look, not a fixed HP, so the worst speed and stamina penalty lands at 65 HP on Heavy and 5 on Light.
 
 ## 1.2.4
 
