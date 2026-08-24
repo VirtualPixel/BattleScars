@@ -24,7 +24,7 @@ Each scarred part worsens by stacking layers rather than swapping one look for t
 
 Rough landmarks at Heavy: the first broken-mesh limb shows around 40 HP. The broken head holds out the longest, until you're under 15. Everything between those overlaps.
 
-Which limbs scar, and in what order, is reseeded every level, so the same HP wears differently from one level to the next. Within a level the layout holds steady and healing walks it back in reverse; it only reshuffles once you're patched back up to full health.
+Which limbs scar, and in what order, holds steady for a whole damage episode, shop and truck trips between levels included, and healing walks it back in reverse. It only reshuffles once you're patched back up to full health, so the next time you get hurt the damage lands somewhere else.
 
 Max-HP upgrades buy a real buffer. 160 max HP means you can take 65 damage at Heavy before the first scar shows.
 
@@ -72,7 +72,7 @@ DebugLogging = false
 
 Most players never need to touch anything except `Mode`.
 
-`ScarIntensity` shifts the whole curve. Heavy (default) piles scars on after the first few hits, Normal is the calmer middle ground, Light holds them off until you're badly hurt.
+`ScarIntensity` shifts the whole curve. Heavy (default) piles scars on after the first few hits, Normal is the calmer middle ground, Light holds them off until you're badly hurt. It moves the `Full` mode nerfs and the camera glitches with it, since both key off how scarred you look rather than a fixed HP: the worst speed and stamina penalty lands at 65 HP on Heavy, 35 on Normal, and 5 on Light.
 
 `Vignette` toggles the red edge overlay at low HP. `VignetteIntensity` (0 to 1) is how strong it gets at its worst. `CameraGlitches` is an opt-in flavor extra, off by default: turn it on and the camera will fault and flicker occasionally once you're near death. REPO's photosensitivity accessibility setting also forces the camera glitches off and holds the vignette to a steady glow.
 

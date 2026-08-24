@@ -24,11 +24,12 @@ namespace BattleScars.Services
     // the two mutually exclusive), and a broken mesh. Every scar asset folds
     // onto its limb region by CosmeticType.
     //
-    // A scarred limb is pinned for the level and accumulates layers as HP drops:
-    // a crack overlay, then a bandage, the overlay worsening to the damaged
-    // texture, then a broken mesh, shedding them again on heal. Which limbs
-    // scar, and in what order, is seeded per level (RerollRoundSeed), so each
-    // level wears its damage differently.
+    // A scarred limb is pinned for the damage episode and accumulates layers as
+    // HP drops: a crack overlay, then a bandage, the overlay worsening to the
+    // damaged texture, then a broken mesh, shedding them again on heal. Which
+    // limbs scar, and in what order, is seeded once per episode
+    // (RerollRoundSeed), so the same HP wears differently the next time you get
+    // hurt.
     //
     // Scars broadcast through vanilla SetupCosmeticsRPC so every peer renders
     // them, even on unmodded clients. The buffered RPC also picks late joiners
@@ -73,8 +74,8 @@ namespace BattleScars.Services
         private static List<Region>? _regions;
         private static bool _discoveryRan;
 
-        // Reseeded on every level change so the scar layout differs level to
-        // level and run to run. Driver drives this.
+        // Reseeded on the edge back to full health, so one damage episode wears
+        // a stable layout and the next one differs. Driver drives this.
         private static int _roundSeed;
 
         public static void RerollRoundSeed() => _roundSeed = Guid.NewGuid().GetHashCode();
@@ -192,11 +193,11 @@ namespace BattleScars.Services
             return false;
         }
 
-        // Stable per-level pick for the region's broken mesh. The rare pool is
-        // rolled in order; first hit wins, otherwise the primary mesh stays.
-        // The seed is folded with the region key and steamID so the choice
-        // holds for one damage episode (until the full-health reroll) and
-        // varies across runs and across peers.
+        // Stable pick for the region's broken mesh. The rare pool is rolled in
+        // order; first hit wins, otherwise the primary mesh stays. The seed is
+        // folded with the region key and steamID so the choice holds for one
+        // damage episode (until the full-health reroll) and varies across runs
+        // and across peers.
         private static int PickBrokenMesh(Region region, string steamID)
         {
             if (region.RareBrokenMeshes.Count == 0) return region.BrokenMesh;
@@ -293,8 +294,8 @@ namespace BattleScars.Services
             return result;
         }
 
-        // The limb regions to scar, worst first, shuffled by the per-level seed
-        // so the layout holds for a level but differs level to level. SteamID is
+        // The limb regions to scar, worst first, shuffled by the episode seed so
+        // the layout holds until you're patched back up to full. SteamID is
         // folded in so peers in one lobby don't scar identically.
         private static List<Region> OrderedRegions(string steamID)
         {
