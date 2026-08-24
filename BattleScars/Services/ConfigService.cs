@@ -36,10 +36,14 @@ namespace BattleScars.Services
         }
 
         // Verbose cosmetic-sync trace. Silent unless the player turns on
-        // DebugLogging for a bug report.
+        // DebugLogging for a bug report. Callers on a tick or with a
+        // Describe() in the message check DiagOn first so the string is
+        // never built for nobody.
+        public static bool DiagOn => PluginConfig.DebugLogging.Value;
+
         public static void LogDiag(string msg)
         {
-            if (PluginConfig.DebugLogging.Value)
+            if (DiagOn)
                 BattleScars.Log.LogInfo("[Scars] " + msg);
         }
 

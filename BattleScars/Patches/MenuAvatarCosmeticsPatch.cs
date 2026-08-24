@@ -40,7 +40,8 @@ namespace BattleScars.Patches
 
             int hp = Driver.EffectiveHealthFor(local);
             var forced = Cosmetics.ForcedSetForHealth(local.steamID, hp, Cosmetics.PlayerWearsHat(local));
-            ConfigService.LogDiag($"{(isExpression ? "expression" : "menu")} preview hp={hp} {Cosmetics.Describe(forced)}");
+            if (ConfigService.DiagOn)
+                ConfigService.LogDiag($"{(isExpression ? "expression" : "menu")} preview hp={hp} {Cosmetics.Describe(forced)}");
             if (forced.Count == 0) return;
 
             var combined = Cosmetics.Merge(MetaManager.instance?.cosmeticAssets, _cosmeticEquipped, forced);

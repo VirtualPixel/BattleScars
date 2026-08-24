@@ -417,8 +417,9 @@ namespace BattleScars.Services
             var ownList = avatar.playerCosmetics.cosmeticEquippedRaw ?? new List<int>();
             var combined = Merge(assets, ownList, forced);
 
-            ConfigService.LogDiag(
-                $"apply steam={avatar.steamID} forced={{ {Describe(forced)} }} (combined {combined.Count} total)");
+            if (ConfigService.DiagOn)
+                ConfigService.LogDiag(
+                    $"apply steam={avatar.steamID} forced={{ {Describe(forced)} }} (combined {combined.Count} total)");
 
             avatar.playerCosmetics.SetupCosmetics(_synced: SemiFunc.IsMultiplayer(), _forced: true, _cosmetics: combined);
             avatar.playerCosmetics.SetupColors(_synced: SemiFunc.IsMultiplayer());

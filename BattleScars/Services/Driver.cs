@@ -133,17 +133,21 @@ namespace BattleScars.Services
 
             if (_applied.TryGetValue(local.steamID, out var was) && SameSet(was, forced))
             {
-                ConfigService.LogDiag($"tick hp={hp} dead={dead} disabled={disabled} scars={forced.Count} -> skip (no change)");
+                if (ConfigService.DiagOn)
+                    ConfigService.LogDiag($"tick hp={hp} dead={dead} disabled={disabled} scars={forced.Count} -> skip (no change)");
                 return;
             }
 
             var previous = was ?? new List<int>();
             _applied[local.steamID] = forced;
 
-            ConfigService.LogDiag(
-                $"tick hp={hp} dead={dead} disabled={disabled} scars={forced.Count} -> {(forced.Count == 0 ? "restore" : "apply")}");
-            ConfigService.LogDiag($"  diff: {Cosmetics.DescribeDiff(previous, forced)}");
-            ConfigService.LogDiag($"  set:  {Cosmetics.Describe(forced)}");
+            if (ConfigService.DiagOn)
+            {
+                ConfigService.LogDiag(
+                    $"tick hp={hp} dead={dead} disabled={disabled} scars={forced.Count} -> {(forced.Count == 0 ? "restore" : "apply")}");
+                ConfigService.LogDiag($"  diff: {Cosmetics.DescribeDiff(previous, forced)}");
+                ConfigService.LogDiag($"  set:  {Cosmetics.Describe(forced)}");
+            }
 
             if (forced.Count == 0) Cosmetics.RestoreToLocal(local);
             else Cosmetics.Apply(local, forced);
@@ -190,7 +194,8 @@ namespace BattleScars.Services
                 return;
             }
             _applied[local.steamID] = forced;
-            ConfigService.LogDiag($"reassert -> apply {Cosmetics.Describe(forced)}");
+            if (ConfigService.DiagOn)
+                ConfigService.LogDiag($"reassert -> apply {Cosmetics.Describe(forced)}");
             Cosmetics.Apply(local, forced);
             Cosmetics.RefreshExpressionPreview();
         }
