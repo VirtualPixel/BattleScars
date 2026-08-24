@@ -76,8 +76,12 @@ namespace BattleScars.Services
         }
 
         // Numpad 0 disables, 1 jumps to HP 1, 2-9 jump to HP 20, 30, ... 90.
+        // Behind TestHotkeys: the value it writes lands in the cfg file and
+        // broadcasts as real scars, so a stray keypress used to stick until
+        // the player found Numpad 0.
         private void HandleDevHotkeys()
         {
+            if (!PluginConfig.TestHotkeys.Value) return;
             int? target = null;
             if (Input.GetKeyDown(KeyCode.Keypad0)) target = -1;
             else if (Input.GetKeyDown(KeyCode.Keypad1)) target = 1;

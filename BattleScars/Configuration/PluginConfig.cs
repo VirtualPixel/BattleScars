@@ -78,6 +78,7 @@ namespace BattleScars.Configuration
         public static ConfigEntry<float> VignetteIntensity = null!;
         public static ConfigEntry<bool> CameraGlitches = null!;
         public static ConfigEntry<int> TestHealth = null!;
+        public static ConfigEntry<bool> TestHotkeys = null!;
         public static ConfigEntry<bool> DebugLogging = null!;
 
         public static void Init(ConfigFile config)
@@ -109,8 +110,12 @@ namespace BattleScars.Configuration
             TestHealth = config.Bind(
                 "Testing", "TestHealth", -1,
                 new ConfigDescription(
-                    "Preview a synthetic HP value. -1 disables. 0-100 forces that HP through the tier pipeline without touching real health or networked state. Numpad 0-9 in-game also drives this (0=off, 1=HP 1, 2=HP 20, etc).",
+                    "Preview a synthetic HP value. -1 disables. 0-100 forces that HP through the tier pipeline without touching real health or networked state. The value sticks until you set it back to -1.",
                     new AcceptableValueRange<int>(-1, 100))
+            );
+            TestHotkeys = config.Bind(
+                "Testing", "TestHotkeys", false,
+                "Put Numpad 0-9 on TestHealth in-game (0=off, 1=HP 1, 2-9=HP 20 to 90). Off by default so a stray keypress can't pin fake scars on you for the rest of the lobby."
             );
             DebugLogging = config.Bind(
                 "Testing", "DebugLogging", false,
