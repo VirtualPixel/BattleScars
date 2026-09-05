@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.2.5
 
 - Numpad test hotkeys sit behind a new `TestHotkeys` toggle, off by default. A stray numpad press mid-run used to pin `TestHealth`, broadcast the fake scars to the lobby, and stick in the config file across restarts, with Numpad 0 as the only way back.
 - Debug trace strings are only built while `DebugLogging` is on. The slow tick was formatting its skip line five times a second for nobody, and every apply was walking the scar set to describe it whether or not anyone was listening.

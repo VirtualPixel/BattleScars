@@ -3,6 +3,6 @@ namespace BattleScars
 {
     internal static class BuildInfo
     {
-        public const string Version = "1.2.4";
+        public const string Version = "1.2.5";
     }
 }

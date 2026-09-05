@@ -2,6 +2,10 @@
 
 Your Semibot visibly falls apart as its health drops. A crack or two first, then bandages, dented plating, and limbs hanging off by the time you're one hit from dead. Heal up and it mends.
 
+> **A note from Vippy**
+>
+> After way too long of a break, I'm finally back and working on these again :D Every one of my mods just got a full pass: bugs fixed, reports read, a few things I'd always meant to do. New builds and fixes land in [Vippy's Discord](https://discord.gg/kKqhck2NrP) before they hit Thunderstore, so come hang out. Thanks for sticking around.
+
 ![A Semibot taking hits and scarring up, then healing clean again](https://raw.githubusercontent.com/VirtualPixel/BattleScars/main/media/damage_then_heal.gif)
 
 R.E.P.O. puts a health bar on the back of everyone's neck, but you have to be behind them and close to read it. BattleScars writes the damage across the whole body instead, so you can read a teammate from across the room.
@@ -93,14 +97,22 @@ First time the mod loads each session it copies `MetaSave.es3` to `BepInEx/confi
 
 Harmony targets: `PlayerCosmetics.SetupCosmetics`, `PlayerCosmetics.SetupCosmeticsLogic`, `PlayerAvatar.PlayerDeathRPC`, `StatsManager.Start`. Should coexist with any mod that doesn't replace those entirely.
 
-## Contact
+## Come hang out
 
-| Purpose | Where |
+I'm Vippy. I make R.E.P.O. mods and I read every bug report.
+
+| | |
 |---|---|
-| Bug reports and suggestions | [GitHub Issues](https://github.com/VirtualPixel/BattleScars/issues) |
-| Questions, test builds, or just hanging out | [Vippy's Discord](https://discord.gg/kKqhck2NrP) |
-| R.E.P.O. modding in general | [R.E.P.O. Modding Server](https://discord.gg/9fDzZ9sk95) |
+| **[Vippy's Discord](https://discord.gg/kKqhck2NrP)** | Test builds land here before Thunderstore, you get a say in what comes next, and it's the fastest way to get a bug fixed. Come say hi. |
+| **[GitHub Issues](https://github.com/VirtualPixel/BattleScars/issues)** | Bug reports and ideas that deserve a paper trail. |
+| **[R.E.P.O. Modding Server](https://discord.gg/9fDzZ9sk95)** | The whole modding scene, not just me. |
+| **[More of my mods](https://thunderstore.io/c/repo/p/Vippy/)** | Everything else I've made for R.E.P.O. |
 
-Everything I make stays free. If one of these mods made your runs better and you feel like saying thanks, there is a [Ko-fi](https://ko-fi.com/vippydev).
+## Keep the mods coming
 
-Other mods at [Vippy on Thunderstore](https://thunderstore.io/c/repo/p/Vippy/).
+Everything I make is free and stays free. Two ways to help if you feel like it, neither one expected:
+
+- **[Ko-fi](https://ko-fi.com/vippydev)**: buy me a coffee and your name goes on the supporters list in my Discord. Every coffee buys another evening on the next update.
+- **[BisectHosting](https://bisecthosting.com/vippy)**: hosting a server for Minecraft or anything else your crew plays? Code `vippy` takes 25% off, and I get a cut at no cost to you. It's where my own servers live.
+
+[![25% off BisectHosting servers with code vippy](https://www.bisecthosting.com/partners/custom-banners/71eecea6-f5bb-437d-ac56-f6fee4266193.png)](https://bisecthosting.com/vippy)
