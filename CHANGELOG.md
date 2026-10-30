@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.6
+
+- The speed nerf now looks up `OverrideSpeed` at runtime instead of calling it directly, so a game update that adds or reorders an optional parameter on that call doesn't take the mod down. Same effect, just bound a little later.
+
 ## 1.2.5
 
 - Numpad test hotkeys sit behind a new `TestHotkeys` toggle, off by default. A stray numpad press mid-run used to pin `TestHealth`, broadcast the fake scars to the lobby, and stick in the config file across restarts, with Numpad 0 as the only way back.
